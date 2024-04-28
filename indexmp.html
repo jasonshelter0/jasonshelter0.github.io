@@ -1217,7 +1217,8 @@ function RTS1(jd,vJ,vW,tz){
  SZJ.calcRTS(jd, 1, vJ, vW, tz); //升降计算,使用北时时间,tz=-8指东8区,jd+tz应在当地正午左右(误差数小时不要紧)
  var s, ob = SZJ.rts[0];
 // JD.setFromJD(jd+J2000);
- s  = '日出 <font color=red>'+ob.s + '</font> 日落 '+ob.j +' 中天 '+ob.z +'<br>';
+s = "ceshi";
+ s += '日出 <font color=red>'+ob.s + '</font> 日落 '+ob.j +' 中天 '+ob.z +'<br>';
  s += '月出 '+ob.Ms+ ' 月落 '+ob.Mj+' 月中 '+ob.Mz+'<br>';
  s += '晨起天亮 '+ob.c + ' 晚上天黑 '+ob.h +'<br>';
  s += '日照时间 '+ob.sj+ ' 白天时间 '+ob.ch+'<br>';
