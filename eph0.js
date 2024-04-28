@@ -530,7 +530,7 @@ var JD = { //日期元件
     var idx = 1 + int2((-jdFirstSCOSSLOP + jd) / 63);
     var idxW = int2((- jdFirstSCOSSLOP - (idx - 1) * 63 + jd) / 7) + 1;
     if (idx < 21) return '新' + this.NumberToChinese(idx) + '九第' + this.NumberToChinese(idxW) + '周';
-    else return this.NumberToChinese(idx) + '九';
+    else return this.NumberToChinese(idx) + '九第' + this.NumberToChinese(idxW) + '周';
   },
   JgetSCOSSLOPSeqEng: function (y, m, d) {
     var jd = JD.JD(y, m, d);
