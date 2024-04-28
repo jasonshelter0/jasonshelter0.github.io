@@ -1245,6 +1245,9 @@ function showMessD(n){ //显时本月第n日的摘要信息。调用前应先执
 
  if(window.event && window.event.srcElement.tagName=='SPAN'){ //鼠标移过日期上方
   s  = Ayear2year(ob.y) + '年' + ob.m + '月' + ob.d + '日<br>'
+  s += '新历' + JD.NumberToChinese(arrN[0]) + '年' + JD.NumberToChinese(arrN[1]) + '月' + JD.NumberToChinese(arrN[2]) + '日</br>';
+  s += JD.JgetSCOSSLOPSeq(ob.y, ob.m, ob.d) + '</br>';
+  s += JD.JgetSemWeekSeq(ob.y, ob.m, ob.d, 2024, 2, 25, 20, '大三下') + '</br>';
   s += ob.Lyear3+'年 星期' + JD.Weeks[ob.week] + ' ' + ob.XiZ +'<br>';
   s += ob.Lyear4+'年 '+ob.Lleap + ob.Lmc + '月' + (ob.Ldn>29?'大 ':'小 ') + ob.Ldc + '日<br>';
   s += ob.Lyear2+'年 '+ob.Lmonth2+'月 '+ob.Lday2+'日<br>';
