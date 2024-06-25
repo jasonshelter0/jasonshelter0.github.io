@@ -300,10 +300,10 @@ var JD = { //日期元件
     return Y + "." + M + "." + D + " " + h + ":" + m + ":" + s;
   },
   SD: function (sdrb) { // 儒略日数转SDRB日
-    return sdrb + 2460121.5;
+    return sdrb + 2460118.5;
   },
   DS: function (js) { // SDRB日转儒略日数
-    return js - 2460121.5;
+    return js - 2460118.5;
   },
   JS: function (y, m, d) { // 公历转SDRB日
     return this.DS(this.JD(y, m, d));
