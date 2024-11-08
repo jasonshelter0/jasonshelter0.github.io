@@ -179,18 +179,6 @@ var oba = { //公历基础构件
       if (type == '.') r.C += s + ' ';
     }
   },
-  getHuiLi: function (d0, r) { //回历计算
-    //以下算法使用Excel测试得到,测试时主要关心年临界与月临界
-    var z, y, m, d;
-    d = d0 + 503105; z = int2(d / 10631);       //10631为一周期(30年)
-    d -= z * 10631; y = int2((d + 0.5) / 354.366); //加0.5的作用是保证闰年正确(一周中的闰年是第2,5,7,10,13,16,18,21,24,26,29年)
-    d -= int2(y * 354.366 + 0.5); m = int2((d + 0.11) / 29.51);  //分子加0.11,分母加0.01的作用是第354或355天的的月分保持为12月(m=11)
-    d -= int2(m * 29.5 + 0.5);
-    r.Hyear = z * 30 + y + 1;
-    r.Hmonth = m + 1;
-    r.Hday = d + 1;
-  }
-
 };
 
 oba.init();
@@ -333,30 +321,6 @@ var obb = { //农历基础构件
     if (u.cur_lq >= 0 && u.cur_lq < 10 && w == '庚') r.B += '末伏 ';
     if (u.cur_mz >= 0 && u.cur_mz < 10 && w == '丙') r.B += '入梅 ';
     if (u.cur_xs >= 0 && u.cur_xs < 12 && w2 == '未') r.B += '出梅 ';
-  },
-
-  mingLiBaZi: function (jd, J, ob) { //命理八字计算。jd为格林尼治UT(J2000起算),J为本地经度,返回在物件ob中
-    var i, c, v;
-    var jd2 = jd + dt_T(jd); //力学时
-    var w = XL.S_aLon(jd2 / 36525, -1); //此刻太阳视黄经
-    var k = int2((w / pi2 * 360 + 45 + 15 * 360) / 30); //1984年立春起算的节气数(不含中气)
-    jd += pty_zty2(jd2 / 36525) + J / Math.PI / 2; //本地真太阳时(使用低精度算法计算时差)
-    ob.bz_zty = JD.timeStr(jd);
-
-    jd += 13 / 24; //转为前一日23点起算(原jd为本日中午12点起算)
-    var D = Math.floor(jd), SC = int2((jd - D) * 12); //日数与时辰
-
-    v = int2(k / 12 + 6000000); ob.bz_jn = this.Gan[v % 10] + this.Zhi[v % 12];
-    v = k + 2 + 60000000; ob.bz_jy = this.Gan[v % 10] + this.Zhi[v % 12];
-    v = D - 6 + 9000000; ob.bz_jr = this.Gan[v % 10] + this.Zhi[v % 12];
-    v = (D - 1) * 12 + 90000000 + SC; ob.bz_js = this.Gan[v % 10] + this.Zhi[v % 12];
-
-    v -= SC, ob.bz_JS = ''; //全天纪时表
-    for (i = 0; i < 13; i++) { //一天中包含有13个纪时
-      c = this.Gan[(v + i) % 10] + this.Zhi[(v + i) % 12]; //各时辰的八字
-      if (SC == i) ob.bz_js = c, c = '<font color=red>' + c + '</font>'; //红色显示这时辰
-      ob.bz_JS += (i ? ' ' : '') + c;
-    }
   },
 
   qi_accurate: function (W) { var t = XL.S_aLon_t(W) * 36525; return t - dt_T(t) + 8 / 24; }, //精气
@@ -678,47 +642,6 @@ var SSQ = { //实朔实气计算器
 
 SSQ.init();
 
-/*********************************
-以下是月历表的具体实现方法
-*********************************/
-
-
-/*********************************
-=====以下是公历、农历、回历综合日历计算类=====
-
-  Lunar：日历计算物件
-  使用条件：事先引用eph.js天文历算文件
-
-  实例创建： var lun = new Lunar();
-一、 yueLiCalc(By,Bm)方法
-·功能：算出该月每日的详信息
-·入口参数：
-  By是年(公历)
-  Bm是月(公历)
-·返回：
-  lun.w0= (Bd0 + J2000 +1)%7; //本月第一天的星期
-  lun.y  公历年份
-  lun.m  公历月分
-  lun.d0 月首儒略日数
-  lun.dn 月天数
-  lun.Ly   干支纪年
-  lun.ShX  该年对应的生肖
-  lun.nianhao 年号纪年
-  lun.lun[] 各日信息(对象),日对象尊守此脚本程序开始的注释中定义
-
-二、yueLiHTML(By,Bm)方法
-// TODO: yueLiHTML(By,Bm)方法
-·功能：算出该月每日的详细信息，并给出HTML月历表
-·入口参数：
-  By是年(公历)
-  Bm是月(公历)
-·返回：
-  yueLiCalc(By,Bm)返回的信息
-  lun.pg0 年份信息
-  lun.pg1 月历表
-  lun.pg2 月相节气表
-
-**********************************/
 
 
 //月历类件
@@ -834,8 +757,6 @@ function Lunar() {
       //星座
       mk = int2((ob.d0 - SSQ.ZQ[0] - 15) / 30.43685); if (mk < 11 && ob.d0 >= SSQ.ZQ[2 * mk + 2]) mk++; //星座所在月的序数,(如果j=13,ob.d0不会超过第14号中气)
       ob.XiZ = obb.XiZ[(mk + 12) % 12] + '座';
-      //回历
-      oba.getHuiLi(ob.d0, ob);
       //节日
       ob.A = ob.B = ob.C = ''; ob.Fjia = 0;
       oba.getDayName(ob, ob); //公历
@@ -876,16 +797,19 @@ function Lunar() {
       ob.jqsj = JD.timeStr(d);
     } while (D + 12 < Bd0 + Bdn);
   };
+  
 
 
   //html月历生成,结果返回在lun中,curJD为当前日期(用于设置今日标识)
   // TODO: html
   this.yueLiHTML = function (By, Bm, curJD) {
-    var sty_head = ' style="font-family: 宋体,serif; font-size: 14px; text-align: center; background-color: #E0E0FF; color: #000000; font-weight: bold" ';
+    var sty_head = ' style="font-family: 宋体,serif; font-size: 14px; text-align: center; background-color: #8796DA; color: #000000; font-weight: bold" ';
     var sty_body = ' style="font-family: 宋体,serif; font-size: 12px; text-align: center " ';
     var sty_date = ' style="font-family: Arial Black; text-align: center;font-size: 20px" ';
     var sty_date2 = ' style="font-family: Arial Black; text-align: center;font-size: 20px; color: #FF0000" ';
-    var sty_cur = ' style="background-color:#90D050" ';
+    var sty_schedule = ' style="font-family: 宋体; text-align: center;font-size: 15px; color: #FFFF00"; font-weight:bold';
+    var sty_schedule_imcomplete = ' style="font-family: 宋体; text-align: center;font-size: 15px; color: #FFFF00; font-weight:bold; background-color:';
+    var sty_cur = ' style="color:#FFFF00; font-size: 18px; font-weight: bold" ';
     const ncMonthColour = {
       '1': '#CE3738',
       '2': '#FF8000',
@@ -946,20 +870,22 @@ function Lunar() {
 
       if (ob.Fjia) c2 = sty_date2; //节日置红色
       else c2 = sty_date;
-      c2 += ' onmouseover="showMessD(' + i + ')"';
-      c2 += ' onmouseout ="showMessD(-1)"';
+      // c2 += ' onmouseover="showMessD(' + i + ')"';
+      // c2 += ' onmouseout ="showMessD(-1)"';
       c2 = '<span' + c2 + '>' + ob.d + '</span>' ; //公历的日名称
 
-      if (ob.d0 == curJD) c2 = '<span' + sty_cur + '>' + c2 + '</span>'; //今日标识
+      if (JD.JD(By, Bm, ob.d) == curJD) c2 = '<span' + sty_cur + '>' + '★' + c2  + '</span>' ; //今日标识, 注意！可能 JD.JD 与 ob.dn 不一致
 
       var arrN = JD.JN(ob.y, ob.m, ob.d);
       cnc = '<span ' + sty_ncDate_incomplete + ncMonthColour[arrN[1].toString()] + '\" '+'><tb>' + arrN[1].toString().padStart(2, '0') + '-' + arrN[2].toString().padStart(2, '0') + '</span>';
+      var ScheduleX = '<text ' + sty_schedule_imcomplete + ncMonthColour[arrN[1].toString()] + '\" ' +'>' + getSchedule(ob.y, ob.m, ob.d) + '</text>' + '<br>';
 
-      cr += '<td' + sty_body + 'width="14%">' + c2  + '<br>' + cnc + '<br>' + isM + c   + '</td>'; //公历日历
+
+      cr += '<td' + sty_body + 'width="14%">' + c2  + '<br>' + cnc + '<br>' + isM + c + '<br>'+  ScheduleX   + '</td>'; //公历日历
       if (i == this.dn - 1) { for (j = 0; j < 6 - ob.week; j++) cr += '<td' + sty_body + '></td>'; } //末行后面的空单元格
       if (i == this.dn - 1 || ob.week == 6) ta0 += '<tr>' + cr + '</tr>', cr = "";
     }
-    this.pg1 = '<table border=0 cellpadding=3 cellspacing=1 width="100%">' + ta0 + '</table>';
+    this.pg1 = '<table border="1" cellpadding=3 cellspacing=1 width="100%">' + ta0 + '</table>';
 
     var b2 = '', b3 = '', b4 = '';
     for (i = 0; i < this.dn; i++) {
@@ -1141,18 +1067,15 @@ function write_JN_and_NJ_and_SDRB(y, m, d) {
   document.write(arrJ[0].toString().padStart(2, '0') + '.' + arrJ[1].toString().padStart(2, '0') + '.' + arrJ[2].toString().padStart(2, '0') + '____');
   document.write(JD.JS(Number(y), Number(m), Number(d)) + '---' + JD.JgetWeekEngName(Number(y), Number(m), Number(d)).toString() + '<br>');
 }
-function write_everything(y, m, d, ySem, mSem, dSem, lengthSem) {
+function write_everything(y, m, d) {
   // document.write(m);
   y = Number(y);
   m = Number(m);
   d = Number(d);
-  ySem = Number(ySem);
-  mSem = Number(mSem);
-  dSem = Number(dSem);
-  lengthSem = Number(lengthSem);
   var arrN = JD.JN(y, m, d);
   var arrJ = JD.NJ(arrN[0], arrN[1], arrN[2]);
   if (arrJ[0] == y && arrJ[1] == m && arrJ[2] == d) {
+    document.write("    " + JD.JDarr(arrJ));
     document.write(y.toString().padStart(2, '0') + '.' + m.toString().padStart(2, '0') + '.' + d.toString().padStart(2, '0') + '____');
     document.write(arrN[0].toString().padStart(2, '0') + '-' + arrN[1].toString().padStart(2, '0') + '-' + arrN[2].toString().padStart(2, '0') + '____');
     // document.write(arrJ[0].toString().padStart(2, '0') + '.' + arrJ[1].toString().padStart(2, '0') + '.' + arrJ[2].toString().padStart(2, '0') + '____');
@@ -1171,4 +1094,104 @@ function write_everything(y, m, d, ySem, mSem, dSem, lengthSem) {
   } else {
     document.write("Ah no! <br>")
   }
+}
+
+function write_everything_NC(ny, nm, nd) {
+  // document.write(m);
+  ny = Number(ny);
+  nm = Number(nm);
+  nd = Number(nd);
+  var arrJ = JD.NJ(ny, nm, nd);
+  document.write(arrJ[0].toString().padStart(2, '0') + '.' + arrJ[1].toString().padStart(2, '0') + '.' + arrJ[2].toString().padStart(2, '0') + '____');
+
+}
+
+function NC_HTML (Ny, Nm, curJD) {
+  var sty_head = ' style="font-family: 宋体,serif; font-size: 14px; text-align: center; background-color: #E0E0FF; color: #000000; font-weight: bold" ';
+  var sty_body = ' style="font-family: 宋体,serif; font-size: 12px; text-align: center " ';
+  var sty_date = ' style="font-family: Arial Black; text-align: center;font-size: 12px" ';
+  var sty_schedule = ' style="font-family: 宋体; text-align: center;font-size: 15px; color: #FFFF00; font-weight:bold;" ';
+  var sty_schedule_imcomplete = ' style="font-family: 宋体; text-align: center;font-size: 15px; color: #FFFF00; font-weight:bold; background-color:';
+  var sty_cur = ' style="font-family: Arial Black; text-align: center; color:#FFFF00; font-size: 18px; font-weight: bold" ';
+  const ncMonthColour = {
+    '1': '#CE3738',
+    '2': '#FF8000',
+    '3': '#2D756D',
+    '4': '#2D5F5C',
+    '5': '#243D62',
+    '6': '#656981',
+    '7': '#AC6A6A',
+    '8': '#BCBA63',
+    '9': '#95B26F',
+    '10': '#7CC1B3',
+    '11': '#3F36EE',
+    '12': '#B4A758',
+    '13': '#9B9992',
+    '14': '#2D3037',
+    '15': '#78979F',
+    '16': '#3F4F61',
+  };
+  var sty_ncDate_incomplete = ' style="font-family: Arial Black; text-align: center;font-size: 20px; color: ';
+
+  var i, j, c, c2, cr = "", cnc, isM;
+  // var ob; //日历物件
+  var arr_startDateJC = JD.NJ(Ny, Nm, 1);
+  var By = arr_startDateJC[0], Bm = arr_startDateJC[1], Bd = arr_startDateJC[2]; //起始日期
+  
+  var NCMonthLength = JD.getNCMonthLength([Ny, Nm]);
+  var startDay = JD.getWeek(JD.JD(By, Bm, Bd)); //起始日期的星期几
+  var endDay = (startDay + NCMonthLength - 1) % 7; //起始日期的星期几
+
+  // this.yueLiCalc(By, Bm);    //农历计算
+  // //年份处理
+  c = '新历' + JD.NumberToChinese(Ny,1) + '年' + JD.NumberToChinese(Nm, 0) + '月'; //新历纪年
+  if (c.length > 33) c = '<span style="font-size:12px">' + c + '</span>';
+  else c = '<span style="font-size:16px;font-weight:bold">' + c + '</span>';
+
+  var ta0 = '<tr><td colspan=7; style="background-color:' + ncMonthColour[Nm] +';color:#FFFF00">' + c + '</td></tr>'; //显示年号
+
+  //月历处理
+  ta0 += '<tr>'
+    // + '<td' + sty_head + 'width="%14">九</td>'
+    + '<td' + sty_head + 'width="%14">日</td>'
+    + '<td' + sty_head + 'width="%14">一</td>'
+    + '<td' + sty_head + 'width="%14">二</td>'
+    + '<td' + sty_head + 'width="%14">三</td>'
+    + '<td' + sty_head + 'width="%14">四</td>'
+    + '<td' + sty_head + 'width="%14">五</td>'
+    + '<td' + sty_head + 'width="%14">六</td></tr>';
+  // cnc_test = '<span ' + sty_ncDate_incomplete + ncMonthColour[Nm] + '\" '+'><tb>' + 10 + '</span>'; //NC的日名称
+  // ta0 += startDay;
+  for (i = 0; i < NCMonthLength+1; i++) { //遍历本月各日(新历)
+    //生成i日的日历页面
+    if (!i) { 
+      if (startDay !=0){
+        for (j = 0; j < startDay; j++) cr += '<td' + sty_body + '></td>';
+      }
+    } //首行前面的空单元格
+    if (!i) continue;
+    
+    c = ''; // , isM = ''; //文字格式控制项
+
+    cnc = '<span ' + sty_ncDate_incomplete + ncMonthColour[Nm] + '\" '+'><tb>' + i + '</span>'; //NC的日名称
+
+    var arrJ = JD.NJ(Ny, Nm, i);
+    var jy = arrJ[0];
+    var jm = arrJ[1];
+    var jd = arrJ[2];
+    // var S = JgetSCOSSLOPInfoArr(jy, jm, jd);
+    var week = JD.getWeek(JD.JD(jy, jm, jd));
+    if (JD.JDarr(arrJ) == curJD) cnc = '<span' + sty_cur + '>' + '★' +  i + '</span>'; // cnc =  +  ++ cnc + ; //今日标识
+    cj = '<span' + sty_date + '>' + jy.toString().slice(-2) + '.' + jm.toString().padStart(2, '0') + '.' + jd.toString().padStart(2, '0')+ '</span>' ; 
+    var ScheduleX = '<text' + sty_schedule_imcomplete + ncMonthColour[Nm] + '\" ' +'>' + getSchedule(jy, jm, jd) + '</text>';
+    // var arrN = JD.JN(ob.y, ob.m, ob.d);
+    // cnc = '<span ' + sty_ncDate_incomplete + ncMonthColour[arrN[1].toString()] + '\" '+'><tb>' + arrN[1].toString().padStart(2, '0') + '-' + arrN[2].toString().padStart(2, '0') + '</span>';
+    if (week == 0) cr += '<td' + sty_body + 'width="14%">' + cnc  + '<br>' + cj + '<br>' + ScheduleX + '<br>' + JD.JgetSCOSSLOPSeq(jy, jm, jd)  + '</td>'; //公历日历
+    else cr += '<td' + sty_body + 'width="14%">' + cnc  + '<br>' + cj + '<br>' +  ScheduleX + '<br>' + '<br>'  + '</td>'; //公历日历
+    if (i == NCMonthLength) { for (j = 0; j < 6 - endDay; j++) cr += '<td' + sty_body + '></td>'; } //末行后面的空单元格
+    if (i == NCMonthLength|| week == 6) ta0 += '<tr>' + cr + '</tr>', cr = "";
+  }
+  pg11 = '<table border="1" cellpadding=3 cellspacing=1 width="100%">' + ta0 + '</table>';
+  return pg11;
+
 }

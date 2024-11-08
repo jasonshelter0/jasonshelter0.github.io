@@ -274,6 +274,16 @@ var JD = { //日期元件
     if (G) n = int2(y / 100), n = 2 - n + int2(n / 4); //加百年闰
     return int2(365.25 * (y + 4716)) + int2(30.6001 * (m + 1)) + d + n - 1524.5;
   },
+  JDarr: function ([y, m, d]) { //公历转儒略日
+    y = Number(y);
+    m = Number(m);
+    d = Number(d);
+    var n = 0, G = 0;
+    if (y * 372 + m * 31 + int2(d) >= 588829) G = 1; //判断是否为格里高利历日1582*372+10*31+15
+    if (m <= 2) m += 12, y--;
+    if (G) n = int2(y / 100), n = 2 - n + int2(n / 4); //加百年闰
+    return int2(365.25 * (y + 4716)) + int2(30.6001 * (m + 1)) + d + n - 1524.5;
+  },
   DD: function (jd) { //儒略日数转公历
     var r = new Object();
     var D = int2(jd + 0.5), F = jd + 0.5 - D, c;  //取得日数的整数部份A及小数部分F
@@ -300,10 +310,10 @@ var JD = { //日期元件
     return Y + "." + M + "." + D + " " + h + ":" + m + ":" + s;
   },
   SD: function (sdrb) { // 儒略日数转SDRB日
-    return sdrb + 2460118.5;
+    return sdrb + 2460121.5;
   },
   DS: function (js) { // SDRB日转儒略日数
-    return js - 2460118.5;
+    return js - 2460121.5;
   },
   JS: function (y, m, d) { // 公历转SDRB日
     return this.DS(this.JD(y, m, d));
@@ -365,6 +375,14 @@ var JD = { //日期元件
     var tgt = nm - int2((nm - 1) / 4) * 4 + (ny == 2 && nm >= 13) - 3 * (ny == 2 && nm == 12);
     return [y, tgt];
   },
+  isValid: function (arrN) { //判断(ny, nm)是否有效
+    var ny = Number(arrN[0]);
+    var nm = Number(arrN[1]);
+    if (ny <= -1000 || ny >= 999) return false;
+    if (nm <= 0 || nm >= 17) return false;
+    if (ny == 2 && nm == 16) return false;
+    return true;
+  },
   T2gCP: function (arrT) { //gCP点生成
     var y = Number(arrT[0]);
     var tgt = Number(arrT[1]); // bug赏析： arrT写成arr。 傻子。
@@ -397,7 +415,26 @@ var JD = { //日期元件
       return s;
     }
   },
-  getLunarInfo: function (arrL) {
+  getNCNextMonth: function (arrThisNC) { // (ny1, nm1) -> next? (ny2, nm2)
+    var nyThis = Number(arrThisNC[0]);
+    var nmThis = Number(arrThisNC[1]);
+    var nmNext = nmThis + 1;
+    var nyNext = nyThis;
+    if ((nyThis == 2 && nmThis == 15) || nmThis == 16) {
+      nmNext = 1;
+      nyNext += 1;
+    }
+    return [nyNext, nmNext];
+  },
+  getNCMonthLength: function (arrThisNC) { //获取给定新历年月的月长度
+    var nyThis = Number(arrThisNC[0]);
+    var nmThis = Number(arrThisNC[1]);
+    var arrNextNC = this.getNCNextMonth([nyThis, nmThis]);
+    var nyNext = Number(arrNextNC[0]);
+    var nmNext = Number(arrNextNC[1]);
+    return this.JDarr(this.NJ(nyNext, nmNext, 1)) - this.JDarr(this.NJ(nyThis, nmThis, 1))
+  }, 
+  getLunarInfo: function (arrL) { // UNUSED
     var gy = Number(arrL[0]);
     var gm = Number(arrL[1]);
     var gd = Number(arrL[2]);
@@ -450,7 +487,7 @@ var JD = { //日期元件
     }
     return r;
   },
-  toChineseNum: function (num) {
+  toChineseNum: function (num) { // UNUSED
     let changeNum = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
     let unit = ["", "十", "百", "千", "万"];
     num = parseInt(num);
@@ -491,14 +528,23 @@ var JD = { //日期元件
     return chnStr;
   },
   // 转换算法主函数
-  NumberToChinese: function (num) {
+  NumberToChinese: function (num, nyFlag) {
     var unitPos = 0;
-    var strIns = '', chnStr = '';
+    var strIns = '', chnStr = '', chnPreStr='';
     var needZero = false;
     var special = (num >= 10 && num <= 19);
+    if (nyFlag == 1 && num == 1) return "元";
     // document.write("Yep! Num=" + num + ' ');
-    if (num === 0) {
+    if (num == 0) {
       return this.chnNumChar[0];
+    }
+    if (num < 0&& nyFlag == 0) {
+      chnPreStr = "负";
+      num *= -1;
+    }
+    if (num < 0&& nyFlag == 1) {
+      chnPreStr = "前";
+      num *= -1;
     }
     while (num > 0) {
       var section = num % 10000;
@@ -513,7 +559,7 @@ var JD = { //日期元件
       unitPos++;
     }
     if (special == true) return chnStr.slice(1);
-    return chnStr;
+    return chnPreStr + chnStr;
   },
   JgetWeekName: function (y, m, d) {
     // document.write(JD.JD(y, m, d) + 1.5 + 7000000)
@@ -523,14 +569,22 @@ var JD = { //日期元件
   JgetWeekEngName: function (y, m, d) {
     return this.WeeksEng[this.getWeek(this.JD(y, m, d))];
   },
+  JgetSCOSSLOPInfoArr: function (y, m, d) {
+    var jd = JD.JD(y, m, d);
+    var jdFirstSCOSSLOP = -141 + 2460121.5; // 03-09-01(2023.02.05)
+    if (jd < jdFirstSCOSSLOP) return [0,0];
+    var idx = 1 + int2((-jdFirstSCOSSLOP + jd) / 63);
+    var idxW = int2((- jdFirstSCOSSLOP - (idx - 1) * 63 + jd) / 7) + 1;
+    return [idx, idxW]
+  },
   JgetSCOSSLOPSeq: function (y, m, d) {
     var jd = JD.JD(y, m, d);
     var jdFirstSCOSSLOP = -141 + 2460121.5; // 03-09-01(2023.02.05)
     if (jd < jdFirstSCOSSLOP) return '[新九周计划未开始]';
     var idx = 1 + int2((-jdFirstSCOSSLOP + jd) / 63);
     var idxW = int2((- jdFirstSCOSSLOP - (idx - 1) * 63 + jd) / 7) + 1;
-    if (idx < 21) return '新' + this.NumberToChinese(idx) + '九第' + this.NumberToChinese(idxW) + '周';
-    else return this.NumberToChinese(idx) + '九第' + this.NumberToChinese(idxW) + '周';
+    if (idx < 21) return '新' + this.NumberToChinese(idx, 0) + '九第' + this.NumberToChinese(idxW, 0) + '周';
+    else return this.NumberToChinese(idx, 0) + '九第' + this.NumberToChinese(idxW, 0) + '周';
   },
   JgetSCOSSLOPSeqEng: function (y, m, d) {
     var jd = JD.JD(y, m, d);
@@ -547,7 +601,7 @@ var JD = { //日期元件
     if (jd < jdS) return '[' + semName + '学期未开始]';
     if (jd > jdE) return '[' + semName + '学期已结束]';
     var idx = 1 + int2((jd - jdS) / 7);
-    return semName + '学期第' + this.NumberToChinese(idx) + '周';
+    return semName + '学期第' + this.NumberToChinese(idx, 0) + '周';
   },
   JgetSemWeekSeqEng: function (y, m, d, y0, m0, d0) {
     var jd = JD.JD(y, m, d);
@@ -572,6 +626,7 @@ function gDateComp(gDate1, gDate2) { // returns gDate1 is earlier than gDate2
   gd2 = gDate2.split('.')[2];
   return ((gy1 < gy2) || (gy1 == gy2 && gm1 < gm2) || (gy1 == gy2 && gm1 == gm2 && gd1 < gd2))
 }
+
 
 
 
@@ -1163,25 +1218,6 @@ function XL0_calc(xt, zn, t, n) { //xt星体,zn坐标号,t儒略世纪数,n计�
   return v;
 }
 
-
-function pluto_coord(t) { //返回冥王星J2000直角坐标
-  var i, j, c0 = Math.PI / 180 / 100000;
-  var x = -1 + 2 * (t * 36525 + 1825394.5) / 2185000;
-  var T = t / 100000000;
-  var r = new Array(0, 0, 0);
-  for (i = 0; i < 9; i++) {
-    var ob = XL0Pluto[i], N = ob.length, v = 0;
-    for (j = 0; j < N; j += 3) v += ob[j] * Math.sin(ob[j + 1] * T + ob[j + 2] * c0);
-    if (i % 3 == 1) v *= x;
-    if (i % 3 == 2) v *= x * x;
-    r[Math.floor(i / 3)] += v / 100000000;
-  }
-  r[0] += 9.922274 + 0.154154 * x;
-  r[1] += 10.016090 + 0.064073 * x;
-  r[2] += -3.947474 - 0.042746 * x;
-  return r;
-}
-
 function p_coord(xt, t, n1, n2, n3) { //xt星体,T儒略世纪数,TD
   var z = new Array();
   if (xt < 8) {
@@ -1495,254 +1531,19 @@ var XL = { //日月星历基本函数类
     return re;
   }
 };
-
-
-//地图投影转换部分
-
-function dituJM(p, Jb, Wb) { //地图解码,p地图串,Jb经度的倍率,Wb纬度倍率
-  p = p.split('');
-  var len = p.length, a = new Array();
-  var J = 0, W = 0, b = 0;
-  var i, j, k = 0, k2 = 0, c;
-  for (i = 0; i < len; i++) {
-    c = p[i];
-    if (c == '#') { J = 0, W = 0, k2 = 0, a[k] = 1e7, k++; continue; }
-    if (c >= 'a' && c <= 'z') b = c.charCodeAt(0) - 97;
-    else if (c >= 'A' && c <= 'Z') b = 65 - c.charCodeAt(0);
-    else {
-      for (j = ++i; i < j + 20; c += p[i++]) {
-        if (p[i] == ',') { b = c - 0; break; }
-        if (p[i] == ':') { b = 0 - c; break; }
-      }
-    }
-    k2++;
-    if (k2 % 2) J += b, a[k] = J * Jb, k++;
-    else W += b, a[k] = W * Wb, k++;
-  }
-  return a;
+///////////////////////////////////////////////////
+// 获取日程的函数
+const scheduleMap = new Map([
+  ["2024.11.07", "今天"],
+  ["2024.11.15", "材料提交"],
+  ["2024.12.21", "考研笔试"],
+  // 添加更多日程...
+]);
+// 获取日程的函数
+function getSchedule(jy, jm, jd) {
+  // 格式化输入日期为 "YYYY.MM.DD"
+  const dateKey = `${jy}.${String(jm).padStart(2, '0')}.${String(jd).padStart(2, '0')}`;
+  
+  // 使用Map快速查找日程
+  return scheduleMap.get(dateKey) || "";
 }
-
-var ditu0 = //大小图像大小2009*970点对应360度*180度
-  '1e7,2,212,58,180,121,180,128,143,150,129,130,129,99,147,92,171,74,170,42,150,122,104,175,102,230,118,223,124,192,125,215,138,405,92,413,99,411,126,445,117,422,100,590,65,639,76,606,88,724,88,741,101,818,93,942,111,1010,111,1064,126,1045,134,1003,130,1003,146,918,159,896,189,881,189,879,170,926,146,922,142,861,159,793,160,767,176,776,181,793,180,793,213,758,253,740,255,720,270,731,299,714,297,713,282,702,273,689,273,688,263,667,274,673,283,689,283,676,296,689,325,678,353,642,373,604,373,596,387,619,422,598,435,569,417,564,440,594,475,586,479,551,441,554,415,531,400,519,371,459,401,453,433,437,441,390,359,335,353,278,328,273,336,299,361,317,354,340,375,259,420,206,339,187,334,240,427,291,431,269,470,220,511,228,566,163,663,108,672,72,575,85,524,41,453,2,454,2,290,65,286,67,308,193,320,208,292,163,291,158,273,203,260,231,267,234,253,208,229,175,229,161,260,129,282,86,232,74,238,99,265,94,275,54,246,2,272,2,212,' //亚欧非大陆
-  + '1e7,67,54,115,46,154,50,155,54,119,58,100,71,67,54,1e7,300,96,321,77,385,68,388,71,315,91,327,101,317,105,300,96,1e7,522,45,547,44,592,58,573,62,550,60,522,45,1e7,775,75,780,82,808,83,818,74,806,72,775,75,' //欧洲上面几块
-  + '1e7,809,180,799,188,800,232,811,230,809,180,1e7,802,238,790,256,788,284,748,295,738,310,744,317,754,302,791,301,797,269,816,244,802,238,' //日本
-  + '1e7,686,354,681,357,677,365,683,371,686,354,1e7,544,460,583,487,602,515,640,527,597,528,544,460,1e7,662,452,619,482,638,507,646,507,672,484,665,469,673,460,662,452,1e7,680,480,671,513,684,514,703,479,680,480,1e7,747,492,750,504,808,532,846,537,820,507,776,494,747,492,' //台湾及菲律滨几块
-  + '1e7,771,548,708,560,641,604,659,675,746,653,790,690,842,689,865,666,868,628,802,541,796,576,767,564,771,548,1e7,973,672,981,693,941,736,952,742,1003,693,973,672,1e7,282,550,257,571,254,619,268,619,289,564,282,550,' //大洋洲两块及马达加斯加
-  + '1e7,1092,112,1117,120,1119,126,1091,124,1082,130,1118,134,1091,146,1135,163,1105,176,1107,178,1140,169,1172,151,1255,160,1316,204,1322,278,1425,388,1517,419,1550,449,1579,450,1560,516,1587,566,1620,582,1593,744,1614,786,1644,785,1621,773,1643,745,1634,739,1771,605,1815,536,1815,519,1629,429,1557,442,1543,405,1522,404,1526,377,1486,392,1464,371,1477,332,1546,326,1559,351,1559,320,1618,256,1672,238,1639,204,1685,203,1699,192,1657,162,1582,146,1574,200,1502,169,1483,153,1573,108,1607,115,1607,126,1582,134,1644,145,1667,119,1559,96,1558,75,1666,31,1593,27,1334,68,1329,109,1259,112,1142,101,1092,112,' //美洲
-  + '1e7,1680,39,1617,62,1634,77,1684,75,1734,110,1721,121,1744,151,1774,156,1788,131,1890,101,1864,88,1897,88,1906,54,1947,36,1927,36,1862,49,1892,37,1831,41,1836,33,1900,28,1833,22,1750,39,1680,39,1e7,1889,122,1884,136,1914,138,1933,130,1889,122,' //格林兰岛及冰岛
-  + '1e7,1969,175,1959,182,1958,198,1979,192,1980,179,1969,175,1e7,1987,162,1980,172,1995,182,1976,203,2010,201,2010,180,1996,173,2002,166,1987,162,1e7,2010,208,1989,215,2001,222,2001,247,1961,249,1962,287,1999,285,2010,273,2010,208,1e7,2010,297,1980,297,1918,361,1916,415,1943,452,1970,466,2010,456,2010,297'; //非洲东部几块
-
-
-var ditu1 = '' //大小图像大小4200*2100点对应360度*180度
-  //亚欧非海岸
-  + '#796,276,BaebBCeFfDgBhcaDFDFBFbcFeEfFeEgCgbgdeebgcecaBDbEbCaFcFBGBGbGcaaEaFbGcGbGbGdGcFdFdFcGcFcGcGdGeFcFdGcGbHcFeGeEgBfdbgfdgcBecfgcceahBgcgdfbhDebeagBgcgeefBdffcgcbffefdfefeeeeeefddBcdBgbfdfeceCgfegcdafCdddDdbecdbfCfdcfDgcDfCecdGaFdGcFfEdEdBeEaFeEeDcFcGBGBGCFcFfBecdCeegddcdfddcDdGcGbFbHcFbGcEdEcGBFBFdEBGCFaGaFCGBGaHcCcfdDcFcbeFcFfEcGbGaFdGbEbFeEbFeEfEfCfEfDeDgbafCfDfDfBgagbgCgEfEdEeGdDfHbEeCgBgDdBgFcDdBgbfdfbgdhbfbgaeechaBGbDhafCeEeBdGbCbFebdDaEfbfDfDCEaGaFdBeefdfddeceedfbgceefdedbfbfcfCgagCgCgBfFeDfEeGeEeEeCgEeEfBfcfdefdcgeacceeececdbcafBcCdddCBEaGcDeCdfEefcfdgbfcfaedecdCdcbfcBbCcaddeBaeeBfaebfbeeedfbddccddBcdcfBcecdcbbccbdaaeafbbbdBceaCCcefdbfefddcCddaeafcacbBfFBgcCdFeGCFceaedgdddFeGeFccbgDfDcbFcgBEeDfFdBgDfCgGdFdBfefecbedaecdcccgcfcgaafEbFaFcFcHBEDEEHbBfbdFcEaFbDfcffbeBecfeefhceeeehbfBdEEEFECDdaaCcaCDFDgadcddgdhcfchaeCfBeEDFcCFDBDeBcDcBbdgBdBdDaCaCdEFcDCbDcacFcDDDCECCaBbFbCdBecdcdDBddCbbBdeCBcfafBEcfbfddfBeagafDgEfEfEeFeDebceehcfegddeageffeebCdeBfcefbCeccEhahBhdhdgeeffffefffegfefefefefgfgecgbfagafbgcfefdeDeafCcfcGeHeFeKaCCDGacCaJCacBdceFEFDagCeKaHdieheieheeegeheieheffjegflclbmakaeBibkBhBdcfcickDibiEFBEDkbjajdjaibJcCefeiehejfeelclbhCkdEGBFgaDFjeieiegaccbffembcCHEDGaECFLCKDFFIEIEEFHFIDKCICaGFEHFDFBHaGbGdGbGbGdGbGbGdFdbfeheegbeafhajbaeafgfjdjaafCgegibhbCgEddgCeHBDgfffeedbffdkagahegBBFhekdlclBgFfbhejehddejchclcldldnbmDecBfEfDfEgKbEeKbjahBnBld4191:fBfaegdhaEFeFoamafFkDkDjDfdebEcjeDfgajbbaidfdLeKeMcPbaCbFCBGcCeDgGdLcJeIbKfNd4188,eQcPdPbRaKaQcLBBEgFJEJdNdaembKdHDNDQbPcQBNBGaPdefIfQdSbSBSBQbEdOeRblcJeScNENECdhdiBHcSBiduBScTcVaMbICMEnBFFEDIdPBQaPDRbHfHFFGKBLdIfbdHajeBgEfOeSbTcQBbGLaQCPdRbedVbUaTBaCDfIBQdIaMDpBRCSDSBFameqdoemfrdoeffagHbDfTcYaQCKbbfOaIbkfWcTEOFDFYBjEUaHaLBBabeVCPBbDUCTCRDTCCBMCcBMDealbaChENDTBVBUBbFcGnDjFmEFFeGEdLdieFdQbNeScEcPChChDPcHFlEnCFaSbKdBgcfFfJdhFbGPEIEjGgFGFBGbGqboaoDeGFFgEeBOccgEfKeQCEGeGIEFGKEHEPbLcnagfheiecggfLeagagbfbgIfcfhgbfTcUaHDEGGFNEHGgEBefECGDFebfahFkEGGIcKeOdOdOeRbOBGeMeJBiFmCgGbELDICcfJbPCDCPaJEKaFbcegdIaODDEIcMDMELDJDEFPBJeBemdceLeQbHaiFCGBGfEEGGBIdLBLEKEDEgGFBJBLbFcLdEFjEiCFFMcIfKcCfDffeHfJdGdIehBkDmBnDpBoCoblehfBfGfJeKbMeMeOdObHbGaMccbBdIaLBOcHcpbedKcNdGECbdcGdHBBEGCbfIDHFDcgfdcDcFDHBCBEBDCHFEcOcaEFaEbDBDFBcFaKBleFbLCKEKEiBFDGDEeFbCbEEKadEfaPCLDialcocpbaBJBGCLDfBFDCDLEHEGEBFFFGFKBiBFCIEGFcCgBlcHDHCFdIbJaaDkBIaIaeBDCLCgDKbJEICDEcFEEiBECBEBDcGcGjbFEdGjEjBkbieifjcBfgDeEbGeFeFeFgFBECCgFBEkbgccfgbkBefegcfbgbgfdjcebeddfCfGfHbFdBgeeafefheifgbjehfeeafhghdnamBgEBEIDHFIEIDFEKbbEDFcGdGCGBGhDiEjClcmcmclcmbcBjEkCIaKCGCGDLcLaJaJCIEbFgEfBBFbGJDGeHeIBFFEFBGbGcFDELaBDcBIDdcBaHCGdDdMBHCFDHCIBHCGdCaacCdGCJCICGBbdacIaEcDeBcBdgCgDbfDbIbfedfeBEdCgdfBdIDIDJDdEBaEBaGbFdBcFcEBDcDeEJBCDDcKaaFHcKBEEdEHCbdDeDDCGFFDCDBcDJBIDIDaGHEJCBEJaHcHccFcGEBIBGdHCJaDEfCDChBhDgCfDeDcFiDbFCBgEaDFeaGaEBGCGHDIbIaHaJaIbIaJaHcHaEEHCBFeCBGcGbHCGBGDFDGcEcaaDdDaHCGibhaibgDdFeEgafegcibiahbgbefgcddeffecdEfbgffefddgdibhegeceEgdfhdhahBhChBgdfeibgegdiDhDdGbFfDhEfEfFgDhBgEeDgBdEgCcGdFCFCEaFfeeefecfFdBfefgCgCfDBgGeGdIdHccfHbHbHeFeCgFfGeGeBgbdbfgbicBFdGfedadBcDcFeFgEgChDgDGbhChEhDfFcDaGBFaDgEdFeEcFbCeCeChbgBgBBDHcHcFCBEfFaFdaeBcFdeeEaeCgbcdBcdDcdbgCbeDdeacEccCeGdFdECgCCBFcCccddbbCCfEfBfecdDeECceacabceBGdbegchaeBhBgCbBEEebgefehbhBhChBHaGCbCIaFcCDGcGCFEaGhcBCcFbDbDEBCdBEcCfBdEaEdCDBfBhaGDDBhaaBedfDcBfDgafacffchCgDfEhbgafdgegCgbfdBFBECGcFaFCFCFDFDFCFBGDFEFHCFaGBGdFcHcGCGCFDGCGcHbFbGcGbHcHBEdFcHbGbEdEeGcHaGCHCFEDFcGaFFFGCGdGdGdHbHbHcEfCgGcHdGbHaHaHdGbBcEdCbGbCggdefcfDfEeffcfGCDbCeHaHDHBGBGdFCGbGCHCGcHaHBGbHDHaHBGCGEGCFBFDFDHCHbDcHBGaHaFeDeFCDGCGEFEFGDHCGDEFDECFEFBGcFaGDFEFFEGDFEGDHBFDCGDFFEFDCGCGBFFEFECDbBDFCFCFFEBFBGbBcadFcCbFCGBBeFcGaGBGDGBGBFCGEFFDeCeFcFdEBBEaaFdDDCgDaCdBbBfbfbDBDEfaDCdDdbBFdacBbFfDfDbDdFaEcDaDcDeDDBdCgCfDeEfDfDeDfEeEfDfDgCfCgcfcgdgbgbgagbgBgBgBgDfefcgbfdgcgaeegcgbgagbgagBfCeFeEaDcFeEgBgbgbgbecbadCeEeDeBaEdFCGaGCFDFdDBDBEfCGbaDCGDDBBcFdGdEdFfEeEeEeEeFdEdFbFdFfbECCCdGdFcFcFcGCEBFcGdFdFaFaHCFDFFDDECFCGaFDGBGDEbGBGaGbGcGfEdFcFdFdGcFeFdFdFcGBFaFaGdFbGaGbGdFbFcFdFfFfEdEcGcGdFdFdGeFbGDECDdEdFBFcbdDhBdEgbgdgbhafdhbhBgbhCfchaeehBfcgdfdgefeeffefeefefdfdfeffdfecgbfcgbgagDabfgdgdgcgcfddfBcaecgBgBfBeCfBgEebgbbfeefgceeefeffdgdgcgcfddeefefaeddCfBdagagadBfagagafbfEeFdBfCfCgafBfcgBfEeDfdfbgdfdfdfdfbgedeeddedefdfefeefedffefdeefdgdfeeeeefeeedfefdfefdfcfcgdfdfdfdfdfdfbheeBaBeafchGcEEGCGCGBGaHBFaGDFCGcGDFCHaFdEfEeGbbbfdcfDfFdEeEfFeDeGdFdEdDbBaDfDfBhCgCfEfFeFdDfahBgagaeBbDgCfFeFdDgBgccEfEfDfCgEfDfBgDfCfEeEfBgDfdacFeFdFeFgDbgdgbgdaCGBGcCfDdFeFeFdGdEeEcGbEfEfDfFcGdGBFcGbFdFeEgDfEcFcFdFdGfDdGeEbGBGaGCaeDbGcGcGbGdCgCgcfcfdfchbgbfdfdhafdeegcgbgcgcgceebggdfcgcgbgagdbffdhacgeegcecBgcgceeBdeefeeefcfFdEfDfGcGbGcFeEfBgBgbfDbDGFDEFFDEEDBFCGaGaGCEcFcbfcfagDfFECCaGaDDgDeCfccDeDeCeDBDeDfDeDgCfDcgcCegacegCfBeBeFcFcDdEdGfCgCdEgDfDgBgCgbgcfdhbfDbGcFgDeChagBgBgaeBgBgafBdahcgBgcgBdahbhbgaDbfCbEeDdDbGgCeC#1757,873,CaQBTdNefauaqBkEBB'
-
-  //亚非欧的一些岛(日本、英国等)
-  + '#1602,438,BaFCaFEFFEaFEDGbCbHBIBFbGBFEFEGEFBBFFDFCDCFCeadEDdbFfabdadeFFCCEfdaCEBbGaEfCafaabFdadcdfbgdfbeEcbeGaBfgagCdaBddbBBcbhchcfchahaEFaEeEgaeffdadBfdDdbBDhcgBefdBcEcgfcccebDFdBeefeDfbgeeagBgeedbcfdebeBfDfDgafGbbDdDFBDeDDFEbFDEeDCGEFCGFDEFGEHCGBBdcbabdd#1540,389,bbdacGfCcefegBddfdBeGcGCFDFbEFFD#1575,404,BBDDdcbc#1636,483,abedgaEeGdgdfChcgDiDeadgfeiacbebhdGbCfdfGEHbIcHeFeFfGbbFbGCGDFCFHcBDEDEEdFBFdC#1698,509,abdegdCcFEDEbC#1713,518,baedgehdfcEBGbEEFDEEaB#1743,532,bafdgeEBGECC#l594,BaGBJaIaJBHCJbEEHaIBFCCcgefefdjageBaIBHbEdIacdjcdgFbbdCdgBibeaaebfEbEeffHBHaGaDacddfafECCeDCaFDBbgaeffICadbeEaHdfddDdCaecdebbegdkakbFFHEaDcakblaaFDFHEBDHCjajDgEcGgEhFdFFadCgEBFjciDBGFEEEaBgCFE#60:647,BaadbD#73:648,BbBcfBDC#70:651,BadeCE#73:653,abaB#69:657,BaBaCdhBDC#79:659,aaaa#78:660,baBa#74:664,BbbB#87:664,aadfBeCEaF#81:674,bafddfICCF#81:674,#38:686,Baba#34:685,abbdGbfF#P699,aaceceBcFCCEeE#78:716,abaedfHbaDbGdC#56:631,baedFD#74:609,BaHaIDIDICHBacEaedHBfeHbiacejbHaDbeeccIbEdhdFcBchciBhdHcddideCeebEjdfEdDbCaCHDBEcFBGDFbC#527,299:bafcgdhbfecgcgcgbgcgcfcgcgcgcgcfcgcgbgageeagBfagdEeacgCgBgagDfCgDfCcDaDDbECGEDEaCEaECFEEBcDFBCDbFEBCEbECFBGCCFDFDGcGbGbGdFBGDFDFEECGCFcGdGaFaGdGeFgCeD#672,825,BBJaPbNaHdHcKcHcCgmdBfjemdgeNcodecicfdadacmdldjekckBndwaudnexbcGQEVDVCSDPDGDICHCGCIFBBFBEDLDCECCFFcGgGlFhC#1161,909,datd27,budKfQbGaDfKDHFLFGF#1160,919,DaWbWdMeNboesdwCtaeGBEEE#1070,929,davd27:ciDFC#1135,936,Da26:B26:aKcodBd26,draoFFF#1623,871,CaNdLfhfheqBmEfdpauCpDIFUbdgKDmFICPbTbGE#1675,854,CaQbTbccmerDgF#1639,862,CbddbDCB#176,641,BbCddE#192,656,aadfdfBbFFaG#212,664,bafebefeJCDFaF#257,676,aaBeddkbdCKDFD#264,685,BaGdkaDD#139,637,aaHbadiaIdDfecfBffeFECBEbCBCDD#241,700,Caca#235,700,BaGdhbaDaB#103,454,aaFbacbfBfafDfbbhafdeCcGBFaGCFGBCC#107,483,aaEdCeBfhdddbGBGCGBa#176,428,BaGbFeHcGdGdeefbgDhbibgcCFDGdEDE#304,408,abGBHaGcHbDedaeBgBhBfBgbCE#317,413,BbbeaEaB#313,413,bBBb#324,419,BaceeaFE#315,428,BafcEC#314,439,BaBccC#303,445,aaBedBCD#305,455,abBabdeCbCFa#296,464,BbCcdD#303,468,BaabbB#300,472,BBbb#289,474,BaacbC#385,403,aaFcDehbechbgdBCEEDCFDDC#36,458,BbFcbcgbcDDD#50,464,BbFcgCaB#t455,BaEafa#195,893,CaLeGdNfyaBcDbXaoevcBeQBFbHEUbMfdcHcFficnajBdDfbobhGecEglbnDlBlFqDmEQDdfTCKFDHMFEFCB#264,901,BbEdNaDgycmEDFMD#141,912,CbMedckGbB#282,924,EaSc29:cjbGcTcgcibgcuDhdnCtawDPFTE#369,934,CaudSD#538,939,aaFc31,cKCQC#557,934,abKbnducidqCYEODJB#585,933,eadbHB#583,934,Baba#580,934,EBeb#589,945,abaB#623,935,DaBdeD#620,941,aBab#644,938,EaHclC#632,936,aaaa#646,937,Dada#665,934,DaIesbhDNBBB#658,940,DaYdwaJdsBoabCBBSC#675,948,EaWa26,a#692,949,EaZc29,Caa#677,941,Dada#711,944,EamcIC#713,938,EaQczdaEFB#736,941,CaketbUFHa#740,952,EaibEB#691,954,FBecbB#265:744,abfcheDcHdNaccmbgbDcEcNaJbfddbedlCDdbclEdFcDdbicbfiEffjEbchalceejDlbDEcDlCdFFCEDHELDKDNCKDNbMdNbJB#2086,826,abce4186:esBjERD4184,aKB#942,70,aBFbEfBfBgBhbbbgcgbfCcBbgCeDeFcFdFdFbGBGFEGCBB#1805,575,BadeCE#1813,583,BbbdgfhaFDHEBC#1673,537,abBeHdFECGDgbgbfbgagDgcfcgBgagbfFfBdafcgBfhbbdcbBebdeDaFdGbGCGdGcFbHdGdFcGeEDdHdIBDFDGBGeFdFeDaGBB'
-
-  //东南亚各岛
-  + '#1220,69:abEdEeFeEeFdFeCfFdEfDeCgDfDfCfEeDfFcCgCgBgEcFdEeDfDfFeFcEeEfDfCffafCfChafaeDdFcFfCeEfDfEcDeEeEddeEcbdCCDgDcaBdeEdBeEaDeBeFCECDcFhBdEaFfDBDgBeDeECFbFBGaGBGBFEdBDGdBCBC#1337,49:abafFdGaDdFcDEFaFCafEbGBFbEaagCgafCfECaeDbbdEeagCfbgcfeedBgCeBfCcdafbgcagdgbgceedeefeefdebeaaeabfcdfdeeeccbCedcEdDaFebaEecfEfCEDGBCDeCBCGCDbbCEafEDCBDbDcFdFBFfDeEcEGaEaECCGBFbFDDEEDBEEcEbECEDDbFcDCDDdCaFCGDDB#1242,36:aaEdCeEeGbdeeadcdFbGgBCFCB#1260,38:BbEaaffcdEDE#1245,35:baBbaB#1253,33:aaaaaa#1117,34,aacEfDBdFeBa#1140,hBbDdDfebfFBFBa#1148,HBbbebaBF#1156,VaaEdBgeBdGCC#1165,28:abDdcDbB#1172,39:BaCeDfeDbEbC#1193,62:aaaCbb#1227,79:bafBgBeCaEhagCgCfbgagBgCfChBgCgbgBgbfCgCfBDfbgFcGBFbDfaagagbcbEcHaFBGbFbGbEdEFFaGbGaFbDfGbFcFBGbFbCFEEEB#1335,95:aBeCfEbbfdFeGBEa#1347,102:aaabaB#1360,104:aaDaGbdefdcEBE#1388,103:BaEBDcFCGCGaBgfcgBfCCdBdfCfBeBaDBB#1371,98:aaadaD#1389,96:baBa#1393,99:aabCBc#1396,101:aabafBgBgBfbgbgbddfbEcCaDDFCFbFaGcGbFCCD#1420,97:aaaa#1434,100:aaccDC#1437,100:baebedFBCBCC#1446,98:aBdbacDC#1451,98:aafaddFBDC#1468,94:abfbebadGCDDaB#1466,95:Baba#1489,96:aaaa#1490,95:baeCBcEa#1512,92:aBdbDa#1525,97:baecEBBB#1530,93:aacbeecfBaEDEDaDbB#1526,88:badcEC#1566,81:abdbccbabdBbafBfDDBCCDaEaFbB#1522,LaadDfDgBdEeEfBgbhaDCEaFEGbCDfDdDaFeCddeccDcBgadEfChafCgDgCfDeFdEdFaGeECaHBEFCGgagaedgagBeEeFfDhbgafDdefccebgeegbgCgCgCdFdFfEeDdFhBgBgBhBdDhbEdfbGaFdceHaBfFbFdDfDeEeFeDffcgcCfGdFbGdGcbgEeGdEdFdGcFdGbGcFcGdGbFcGbGcGdFcGdGCCEFDFCEEDEEDGdCeCeBEDgbgadCfCeGaGdGbFEGBDFCdCbDbBC#1580,TaafCgBgbGbGbFa#1583,KaacDfBCdFdDBdB#1727,68:BbCddDaB#1731,64:BadEfCgBeChafdfcddgbBfeeBfCbGabFDDEFECGaBeCCDCGBFcEB#1784,56:aaceCfEdEeFdGeFdDBEdCDgafCfDfEfCdFbGdD#1817,80:aacdDeEeEeDeCbcFbFfEcFeB#1817,81:BBcaBb#1839,87:BaEbFeEeeBeEfCbC#1840,87:aaaa#1865,100:aaDbFdEeGdacgCeEfCdF#1828,93:abBebF#1827,95:aaBaba#1833,95:aaBdbD#1844,102:aaDcDeFBdddCdEcC#1846,103:aaaa#1835,98:aBbCad#1837,102:aaaa#1876,115:aaFaGbDeeagBeDaB#1885,113:BaDdFeCgadeDcEcGdCaB#1894,126:aBFbFdCefDfCcC#1871,107:aaEceC#1405,120:aaFcEeGaaegbfBeCeFED#1433,127:aaeddaFDCa#1439,121:BbecadcefdgceegcgbfagcbDFCGDFCGCEEEFGBFCDbaB#1405,66:aaFbFBDecfchCfCfFBagaedecfagcfecBfBebcdedecBeeeceChagCfahagaededcedEDFEEFDGBGbGbHaFaGBGbFDCGbGfDdEfbeffBfcgacceDEaFDDFGCECBBeEdFdEbDBDcCdEcDDBFaCFGbBgBeFdbgafGaDEcFBGbGCGcGaB#1406,76:abbfCabG#1422,59:BBcEafBa#1431,54:BaDDBFeCdBedCdcdCfCFCGbgBc#1435,46:aBcCCd#1434,OBaaFeccadCCfDbDB#1451,YbafcgafacGaedcCbGaFbGbEEbB#1471,36:aaaFfDfbeeEcGbEa#1492,41:babeeDeceBfafBfCfDBfDfGbGcFBGaFCFDdCaB#1493,44:aaddfaEBDBBB#1486,RaadDgbEdFB#1513,WbafCdcFcEC#1487,JaaBdCddBcEbCDb#1499,LBaEcEfagCgBebfcgecBEaGEEebcdfdbEDDbEeDEaGcBFcGfG#1496,xbbCedcdDEDBB#1519,DbadDbbebecGcGBBC#1521,LbafbFbBC#1402,60,aaEBccdbBC#1415,68,BbEafbaC#1423,75,aaecFbbD#1425,80,BbBecfdegbcefdeEeCcfeeadfBeCBgdddDdEcFaDbDbFbGEEaCBFCfCgBBBDDCdEaGEEafECFcFeCfcfBfFcDDCaBbDECgEECGaB#1436,106,BaDdEedebfDbFaBcbgagBcfDfBeBaCaDeCCFCGbGCE#1439,110,aaafdfcfcfbDaGDCDFCE#1443,112,babefcdBCEGBCa#1442,106,BacbBB#1469,112,aaadcaCD#1466,114,aaBdbfaGaC#1462,116,BaCeBDDfagEaBgbccCeBBcbbbaDdEeaegBccdEcEaFbEcCFbDaaFcFbEaa#1366,83,aabdBD#1365,91,bbCbbC#1368,95,abaedffdfedfeeedadaccecEaFdBFCEEFCBEFEDEFDCDBC#1334,89,aaFBeedBCC#1355,124,aacfDefceefCDFCFEbEE#1399,136,abbdBE#1403,138,aaEdbcdDaC#1423,141,abaecBCE#1431,143,BbacbD#1447,137,aaEdEbBbbfdDeDbE#1444,144,aaBebE#1439,148,aaEecBcD#1423,154,aaBecDBB#1413,142,aaCeCgEeccgBfDaGDFCB#1449,158,BaaedbCEaB#1422,171,aaBeeCCbBD#1448,146,BaCeBaFcCfEeEbcFCCEfFdEEEcEbBdeeDeCFDeCdCgBfBeeCecBfbgBfcgcegbfCfadaCGbGdECFCFBaFDBFBEdGaEeEBcdCadfbeDcEcfeCbDBDdBbCCBeBBG#1094,79,bbCecEBB#1077,123,bbcdDE#1080,133,baBfbgagccbgcEBGCGBGCD#1086,138,BaaebDaB'
-
-  //世界内陆海
-  + '#630,431,aaGBHBHCIaHcGdEeIbFdCgagcgdbaecffdebGcFeDfFfFeEfEfagefEBFfBedbcfdeeabcgaddecceicheibhBiagCcGCGdFHaIbIBDGeEHbIafDeFeFcDgEhBaFCFcFeFCGBGaDfDfDeDBGaGbFbGaB#697,506,aabcDcFcFaEaCgafdgdfgdcCcedahacbHcecebcBfaeaEEEEbGdDgCFDFCbDECGDEFBB#484,484,aaGDHCHBIbICHcGbHdGbGcGdFbJaJaHCHDHDGDIbIbJbHdCgEeedbggdbgcffffdafcdgcDfgCdekbhBJaeCfDjagBEDHDdCgBbFbEiagehchafdCdGCIaDfadabfebcgaibhcgcibibbCICBCHBgDcDGDDFIaCBCChCfEgChCgEfFhDgCfEeFcFDF#395,26:BaECEaCEBBCeCcEbCDCBCdbfbfafafbffcebfbdcaCebdCeFbbebDCDCBECFBDDBDEBBFcfDfacB#411,168:aaFdCeDfBgCfagceBgahDfagfEcGbGcFcGDGbFaHcEdFaD#962:502,aaBfCgHBGDcfeeBgBfHcHdEEEEBCBcFCDFDFaGdGaGEGFEHcDgbgBfcgcfcfdgDBFFBcefefebbBfdibiBgaiaabFcebjBiBgBGBDBGbaBiChDceBchahDeFfFCDHbEcEdEbeGEFBFCGHD#990:129,aaFbGdBgeceEeFaD'
-
-  //美洲海岸
-  + '#794:650:BbFbGdGCFeHaJciaGdJaFdGdFdEeaeJcadjDabFeEeGcbeeBccfDBfDeECGCBcdfddBfFFDddeecGbBeCgeeCdcddFaeBffBcGbaCgdgdfDaHdDCDcgeafgdcgCfcddeebaccFaGBGbccgbfdfafdfbfcbDfafDEHbCfBfcgbfefagCfahCfceeeccbfdgcfdfcfbgefBfcfBgagBgBgdfcfBfagdfbhbfcgbfagcgagagagadagdeagbgbgBgbgBgBgBgDfFdEeEeFdFdGdGdFdFdGcEeFeEfCfbeCfDfDgDfDfDeDgDfCfDgCgCfFeCgDfEeGdFdcdBfBfDedfdffdfecfEddDEDDfFdcdBgBgfdaffeagcegcfeBefcafeegccfefafDccfBhbeBfagEdDfEfBfcdEdFeGBDEFDCDeFEEGaCgDBEeGcGbDCDfBBFbbfEeGcDfFcdCCEEdEecfCeBdFeEfEeFeCedbDcCaGBGbGcGbFdGcHaFdFeFeEeFfFdGcGbGCGCFCGbGcHcGcFdGcGcGcHcFeFeGbGcGbEfFeGdEdEeDgfdCdcfDeCfBgFeEfEfEeGdEfEfGcGdcgCfFdGdDfCeFcFeEfDfDeDgDfBgGdEcGcEEbFcGbGgDeFeEeFcFeFdFfDeFbGeFcGbGfDeCdEdFEEEcDfFeFeGbFeafbgDgFdGeFbFdEeGdfbfeagEeFeGdEfCfCfDfDfDfEjDfGeFdGbGeGbHbBgDeFeEfDfaeFeagdCEeFbDfGeCgagFeagcfagDfagBgdfbgagbgbgagccDdbcCeCfEfafiCjagCCDDEffcCbEagafaaCacEEfddKjfEDdCbIcGeHcdFgDiDhEFCbCIaIdEdHbHeDdFdHdEdFejbiDCdHebeDfBDCaDfDcDdDeGcHeEfBeebDfGfECEfEfCbEeceGgDcFfBcHeGeDgCbcGCEHeHdcCbFIbJdGfKdHeceIDMbCdKaMaJaKdCaKbCdGaBdGaEaGaddECCDbDcbaEDDJaEaCBEDHCIDIcjdEaBfeffelbiaKdKaJDGEGEEEECFEDEjCHFHEJEIDEDHEHDDCGCGEIDFaJCICEbGFGBFBEDJBHbgekbfcgdielbhacfiekdefidbgdfCdKCGbECHeIbKDGbCgbfGfIDMBGfIecfGdGdfdefggffmBkdkcldDfCebeMDICDBNcOBMdFfecOccemdmepcfEjCpaidLdFehFacFePbGfLeNeCfkcrckefgjfpcnesamfqBaDlbmBpBhErarBqCsBqBrbpErCpCmEpCmaBfodjBeCldnenckBODcCpddChfbdjaiFiGldbehBdEgDgfsaoEqCpDrCnbmEGEGErCqaqbnblEmchefdOCEendrbfFnEoBoCqbrBfdheGfKdkfjemDqBGFfEPDiDCGgFdfgflebeFdCgPcJgdeCgjggfChDfahievbvBkEJGIFVacEJGjEiGgFjFKFkCpCCEaHfchgmCgGEFeGoCBgfegCchieFglesBmFfEaFGGhFaGIFNENCLdPbhEGFHFDGHGMDLDJEDHNCIFIGHFFHEGBHbGiDlBdGdGcGgBlclClCjEiEiEkDjDkBmalCeEDHdFaGdFeGhEfFiDgegCafegEgCgagFfdfjdkdggffbhBgEgIfJecgffgeDfHfegCfChldnCoBmblCiEhEgEmDiaDGaGcHiEgFkCkdieegdffghEfFgGgFeHkEcGbHeHjEgFkElChELClBgFkDcGaIEFIELBKDGEHFJCMaLaMaMaLbMCHEEFJCHEGFGGFFFFdbgffehfidjdjdjbjaiCdFGDGEJcBDiCibbBFFaDdEeFiCbDiBiBfaedefeffbaFeCdEGDIDDBaBIDHCICHCEbDFFEHEGdCfcfCCgehehceBicIbIBddadGEIDHBHaaEGDHCCBFCDcEEHDEBFECGBEcDdFfcbaEDHDceGDHCIaHCHCeaiafbdBICHBECFabDCGDEEFDcGebCcGcECGEEDFBddfCdCcDdBcbdbdbdFDaGcFCBGcBBfCfDEBdDBDaDFcfEgBcGcFCdDfcEDbDBEadCfCccaFFDEdEBgDEDcaeaEDHBFEEFCbHCEECEFDFDFDCCEECFCGaFcGcGdFdFaGdGcFbGBGCFDFGBCfFeCfDeadEbDgeeDaCbbgafEeEfFeGaECFCDdFdHcHbabDCHBBcCbECHaFCDDfcaECEfCDDEdEaFbFCFcCcFdCBcCHbGcHaGBHDbcCcBECDdbGDFDGBEbbFFEDFCDCaaEcGdECGCFCGBGBGaGBGjFGDdFbGdFeEdFdGdEgCgCeEhbgcgagcgafdgddfdfBgcggdgbhbgcgBhadDBGFEBGDEcBbCDFBGCDBfBdCFbEaGaFCGEEBEeafBfbfBgahcfagafBgCfEfDaEbGDGBGaGBGaGCFdFdGdEfEfDaBBCfBbafCgbfdgdfcfBgBgDfEdEfEcaCffddfgcbfbfdfeeeCecedgBfegddeecfadEFDFEeEbEDFDFdFcEfccfCfDfbeecfcgcebEcCdfcbFfCgBfDbFfDgbhbgadDgCgBfcecgaGbdbgagbgagaEBGBcEcFbdfCeafDfFaGeafCfDfDeFdFeEfDeDdEfbgCfchBebgBfCfCgCeEfDdCdFdbcFbFbGdFcGfCdECHBGgBdEfBgCBGEFeadfgdhBgChDhDgaeFdGfagagCgDhagCgbgagCgDeDfEeEfEeDgDgahBeEcFcGcHaGBGCGCGEFEFEEFEFEDFDGDFEFDCDcBFBFBGBGbHbGBGCGBGaGFEBHbGDFDGDFEFDFbGGCFECFGbHBGaFCEcBDFCFDbDGcGDFCFEGEEFEECGBFbGaFcaCCaECFFEEEEFDFCGEFEFFEGEFECGEFFEEGFEGDHBHcHCGdHcGcEcaGhDgEaFaGgCaHEFEFEFHDHCICIBIBIaHcbFcGDEaFCFICJaIdGabGaHgDfCadgCCFFbHcbEdCHEDFaGEEBEIaHDEGDFeFgEjBdGCFGEHDGFCGDFIDFFaGcHfFGBEChBfFaEgFhEiEjDgCKBKaEEKabF'
-
-  //美洲的岛
-  + '#509:698,BaJbKdHeMdMBCdIeHgFfFfIfFgDfFdBgEfHeGfbgDfbgcgegmcnaagCeEgOdQccesBcePaLdOeCgDgagHfbgCdEeKfMfNfYbXCZbZbLemdZbEfzb26,cLb28:BGcMbQfmfzcud28,dggdd28:aefyf26,duCIgmdrBMe42,c39,ByCNg37,D28,FbdXfyacbzc26,B44:c46:B31,e48,c47,d53,b52,BvE48:a48:aFD36,b47,b38,CqBzE37:D41:B39:CRE36,d42,b28,aIElaufyDIGRFdBvfpg31,D26,e36,CNFVF33:BhCdDOCaESEDENFHGcFqdhEaEnCODUBnEeGeHPalFpBMGVBHBsDKESCPeJCtDoEEDDDEBQeHfcHoEoECEjBaGHEEdLDIgKeRdGarCcGIENDHDncrcqDtaJEMEMEMEPDRBNaFDRaIdfFMDDGHFKFLDHCFDCcLCegFcaFHELaDCCEMBfBdFJDfBbFMblDHFIECEaFDGEGEFBGFC#625:808,CaHdBcbdDerCnDFFNC#1437:829,BbFeOeKejfefdfcfEgxbuauDvaoFgFSDQEKFMEDGPCOD#1188:805,CaMCRbHcPcGaNDODQCRaQbDgRbQcKfkdscuapbRdTaTaQcdercFcSaKdhfdfoerdtbCGgapcnEjaEepBlFdGkaEhFgjdqCIekdrCGGEGgGgGaGoFpDlELCCEcF#1152:832,BaJeKfOcMfkepDagJdmetBtaCFOEnBiCbGEGOCID#1153:861,CaedhCJB#1130:851,CafcDC#770:722,BaKbMdOcHfMbKeBfLeMePbNBQBIeggfepCnbocIghejfhfEgIfLeNfNDgeDeIeJeNcHEQcEBnDbCMcObPbScNBNeQbJfmbkbRcMeagegdgmfsdwaMEGGmalfretBiGeFFGidrbqdsCjFjErCrDjFqCkFlECFkFOCgGqDnEnEnElEcGHFKEFEHCLdGgJeNbaBFEiEhGnDfGjFEFDGcDEBJfNcJeLdbDjFkEkFaE#756:715,BbGdhCaC#758:720,BbdaCB#895:739,CbGdiE#910:736,BaFekBED#931:718,BbEehfcFEF#970:725,BbGabfkdkBIFGD#946:740,BaKcGeJcHFHEMCCgOBbefedgaheficfFECjakDkEjEaGlchFKD#895:784,CaEfdgochEBGPDCa#858:790,BbMbfcjDBB#874:797,BbCedF#925:803,BbgeeBJE#898:807,BaBdcD#1413:884,aaIdNbqeofnf26,bsaEFJFPCEeHFLFOdCE#1384:881,CaBerdLGDB#1335:871,bbocvcKbVaGBOBRcdewcZBtdKbjdidqCsDiGyaGeaebfpacFnDsaBGLFVBSBRDVCOd#1216:875,CbBejEGB#1330:895,DaecBC#1143:875,DaTaKedeYCheBekcnEMfwaobfFcGGENDma#1197:884,DaKcEdsBBE#1208:890,CaLerCEC#1184:893,CancLC#1108:871,BbOccgscmFCGPa#937:870,CaSBNeKDYBYaIdSCQcJffgJgUbNbPerewCsDqCiBFCcClCfErbvawdyarDiECDGEBB#1050:892,CbbdbE#1052:901,CaKerCFC#1092:903,CbXafd26,BGD#1133:908,aacdRfldxDhFWDEa#1178:907,DaPbsB#1166:908,CaLeYBGdLdocObNcueqFsaqEgGJD#1222:900,CaJegbiFDa#1307:902,DaLene29,bJDHFMB#1333:907,CaBedE#1300:913,DaTbvdxaMEKa#1154:930,BaOdrBCC#946:888,abGd26:aVC27:bSdnfieafvDwCpfGBUDIffdWaBfwdjgUeFgde29:dLfgdHbWb31,d34,cfd34,BsBLfkcqb39,CabwcuCrdra43,CKD37,c26,EDF34:DEDGEYFTFQF26:BFaMEZBuBGDhCHEJDbETBKG26:ayCnDJFUDIB#1037:912,CaMfCDXBEeUe27,dCbXaSddbPfybXclekbdddd27,BnFuEfBmCgEuDHFSFKECaDC#1009:920,bbkaLB#1935:630,BbcbebFD#1925:631,BaEafa#1956:621,bbhcidDabdIBbDHDaC#1973:616,bbhcheHaEEED#1980:616,BaDaddbD#1993:613,abaB#2013:610,BacaBa#2018:608,BaIBJaIajcfcdDja#2049:606,BaGCICcegBecdB#2067:603,BaCbeaBB#2076:602,BbCdfCCC#2096,605,BacbBB#2093,599,BaGdfCcB#2069,605,BaedDD#2027,611,BabcaC#2023,616,BaHadcfC#1932:699,BaHBLdfckbeF#1979:734,BbHdMbFeiBmalDBCFD#1805:658,aajchfiedebfBeFBJEJFDGeDFF#1727:699,BadbCB#1724:702,BadeCE#1725:697,BbgdfcGFEB#1704:704,CaEahcCBbB#1687:698,baabBB#1571:655,BbEeEfFbCfGfgdgChCDBbEFbiDcGaGaB#1570:665,bafeBfbaacIeBDdGaG#1567:651,bbcdcejafdIdGBDaBFaEBE#1550:656,BbdbCC#1540:638,CaFdEdeEGaEfcdECddadFbfehEfFcDcEaD#1529:606,aaFeGeGfDfEffdjBbDCGeFbEgEaD#907:232,aaeedeGcGbEeDfHaHcFdHaEbGbCddcHbFCGDFBFDEaFahbaefehcgbhchagBhagCgEfCgBgDfDFeFdacgDeEfDfEhCgCeDgCfDBDHCGaHbHaGBGa#889:209,BaEaGBFaFdEegbhagDfDbB#833:205,BbCdFeHBHaEaEaGdfcgahBhbEeBfFdBdhbgCgbgahBgBeFgaGBgCgCdECEFdHaFBGBFaDECE#850:218,abFbfaaC#905:277,BaDdEfaecfdFaFdEaD#908:310,BaFaGadchacC#901:302,aaaeBfGdgCeECGBa#784:210,aaaffbhagCEEGaIa#722:117,abecBefccCaGHaDB#625:544,BabfFCBdcgFBHDFFHbgdgeFaGBDcJBJaKbJBcfgfFbbbfeeddfdgdffedfjdgaGDcDFFEGDFfdhaaCeDhafcbCeBfEBFfBbDGEaFefdaBGfdBGDGGB#1816:221,BaCeBgbfgCfEaEGDCC#1825:240,abDdeadDEB#1827:239,aaaa#1831:242,BacbBB#1830:246,BaEbgaBB#1839:249,BBFbbeeEba#1869:254,BbcaBB#707:610:BbCcecacadeBbcgbcEHFGCBB#712:607:abacaD#696:611:BabdfedehbhCaCIDDaaCEBGBBB'
-  //澳洲
-  + '#1708,456:BaEcGeFbBcafGCcDHCGEGcHdHcFBGdGdFfDfcfDgFebeFDHBdebgDfDaCGECHDbfgbagcfdfbfDfCFDGFDGDDGDDbCFcEecbCgEfFdEebeDcGcHcHBGeGdHCHbIBGCHDHBHCHbGCHDGDGCDGFEGbHBGbHaIaHBGEECGDFDDCHbIaHcFeGdCfddfdagbgagDgDfCgBgagEfCgDfBhEfEfDfDfcDdDcCeCDfCfeEbabCeBBfDgDfDfbgdfbgCfdgdbaGdddfgcfdfefdeedCfCfehbfdgbgagcgdfecfeeeeBeageedecBdFdFcfdcFdbedbeCddceDcbdecdccbCffadbdBbfbaebcBedfCeFfEbDfcfDdccaadDeeecffcBfeeccdbddfCgbfcBgFaCddadaeCeDeBfBeCfafDfcdbbCcDddcddDbEDECFEbCEbEDFDFeEfEfDeCfDgDfEgCeEfDgDgcdfdfcgbgcfagagBgcgbfBedfbebgdfeDbFcGbEeEbFbGbFcGfdeBeFeDaFbGbGdEdEcGCGcBcDbGfDeBfDdBeDdBeDBDdEdEdDaGeEcBbdfEcccEBGdDdDbCfCdFfEdFcEcCaGaGbFdDaCcGaGDGaGCGCFaGCGEFCEFEEFDEBFEFBFBDDFDFBGCFaGFDIBHaHDFEGEFacDaB#1679,469:abBfdCCE#1610,419:aaFBHaFchcgafBBC#1346,244:BacbBB#1528,139:BaEbGbdfeagbeDEECB#1547,132:BabeaE#1586,139:bbecefCBEEDD#1582,141:abddaCDC#1590,140:aaaa#1588,158:abaB#1589,161:aabbBB#1598,167:BaFbafdccCBEcC#1594,182:Baba#1595,184:baBa#1597,182:Baba#1599,185:ababaC#1623,195:aaedbBFC#1628,199:aBab#1660,125:BabcaC#1660,120:BbbbaC#1711,219:aaBcbC#1713,224:BbbB#1738,238:abacaD#1749,260:BbbB#1756,261:BbbB#1786,301:BaafdeadaGCGaa#1790,319:aaadaD#1731,472:BaCbdB#1729,474:BbbB#1730,470:abEcadeFaB#1713,509:BaGbEdFeDgafEfCgbegBhDiBichbfBaGaGaDDBBGCEadFBaFDcDE#1689,474:BbbB#1690,472:aaaa#1964,544:BbEcGdIBCfdfffheefhchegdgeheefbggdcgffdDdEgbeebDcBDCfaCEBFFEDFGECFdBBBFBHDHDBGEFCGFDFEHDJaBa#1954,551:aadeeaEEDa#2044,485:aaEdCbefcfDgHcHdefgdbgbcagDgbbDdacBcCaEeEfEfBfCdeDcCeBfCeEaEeFBDdEfEbebedEbFfFhChBfehaCGCFEFaCGbFEbFEFEFDFGEEB#2048,424:BaadbD#2044,430:Baba#1946,262:aaEcEeGdGdDeFeDfBdeDfDfDeEfEfDgECE#1958,252:bbbbBCBa#1952,247:aaDdcdcFBB#1977,229:BaBecE#1975,222:BbDdeCaC#1966,208:BaCdeCBB#1966,197:BbDceD#1964,190:BBEceBba#1958,193:BaEbDedafEaB#1963,187:BbBecDaC#1958,180:BadcCC#1962,179:BaBfcFaa#1951,184:BaEbCgBgdEdacFaE#1953,167:aacBCb#1954,163:BbcbBC#1934,126:BadcCC'
-  //中国的岛
-  + '#1291,235,aaDBFBGBCBEEEEbGfDfCededdedfdeEe#1423,292,aaEdFCEFEEDGBFaGdFdEcacgdedgbfcgafcc'
-  //南极洲
-  + '#1882:933:EaKbNbKdDeecjdjagDcEiCiCaCGB#1472:863:CaJcDcbeicjCaBeanDaBDBIBKB#1272:873:bbJcDbdcGefcebeBcCfBeCBEJD#1111:842:BaGBMbPaMaQbGbacfbdBbblaoBeBfajbiBiD#832:843:abEbKBGcKeGCCDMbNcLgaeeBjDcdkahCkanbjddeagHhGgibgceambBCDDeEaFgDfGDFdGcFDFJDOCKBIdbcjbgafb#507:933:fDNEYD31:CYaVbOeBcDgahhhggeflbtasBoEiEnHoGmF#1252,770:gCmEjdlbieheqelGkCsCgFoEkcwb28,emDecKgjcwGyGuf26,d37,bkatErDnCkcnbiDmEpDlGiFgb26,BmBMEDCmanbvCkdEcdagBdClDvDrDmEpItDvbrBnEuFjFGGVFSIYJ27:IFJoKFFiDcFsCDD29:CUFbKjQ29,N33,L38,J83,G4156:C42,E49,G49,a55,a57,C60,D59,bue32:g59:g35:fbemjHhGghg28,d29,b36,bpbHe29:c26:bUdHe26:lXiHgreuawCpFyCybweleGdHdid28,f31,dvf26,eucyb35,D56,c42,b31,Brbza29,CpF42,D26,dvbtCtCgfEmOfhcra60,C29,c30,CjgkcuEtbqDzEibBgibeEyD37,c39,dwbjgBnEnMiBftnBgghpgadqjbh28,euj26,isfuDBCIbFCGDHaIBDFDEGBRCJFJCQHNHBHFHDHcClfibdHaLkLmJCKkJbFOJHOPJ34:JTHeGcEQE35:b33:iCjMaWaDBZBLbHChHDFmFEDOCbE27,C32,F48,G45,F41,F42,C72,E34,b37,c29,D34,a49,d30,fwfueuczatcidJdPcTbUaUdJdjDNjjfpdrdmepd37,duknhpeygsdiegfqbtaTa44,cpfheBfGeccrehBkDjBkepcvaremepbkDcDhEhBiehdkamDjBjcmcrBtCraxcqboBqanascfDjEmapdpbvapcndpdrambjddgDihajEkGgGgCrdpizhsfqeiBgCgBmdBfoanCdbacdbbcIcccpglajcnakDoDhCFCIFaCjBgcadjClBFCdBwbuC39,BsDpcocjbgdhBaGOHNEFHfCIDBGpDsBjfvdidfedaiBlbcikd28,dyoecdCbEkBmBidhdcdahediagDkHnBud29,aoBoafeDkfcibdEFGlDiacgfcvCxbvFxB'
-  ;
-
-var ditu2 = ''
-  //亚欧各国国界
-  + '#796,277,abdcdegBgBgcfBecBfDgDeEdbhGbBfefdfgBfahbeedfhedfcfhdcfeebfafgdfdgdbegdfCgBfDdCca#945,352,aaECEFBFaFgCgDfEhBfDgCfagbgDeEfBfDhagafCgadfCgcfBb#1037,318,aaaCfDhBgcgCgbgbba#1040,253,BaafBgBgBdCgbeGdBffdecFcEedfbdeDcbeEebcFcFhBhahBhBCEDFEBFDaGcDcCdededCbGcFaGaGCBCEbE#1080,257,badadeBgddbgafgCeedfcfbfdfafedgefdgacaafab#1150,117,aacedfefdgBfCgDfbgDfEeEfbgddbgceDbCgEeEfBgCddcbgceebgbeeecebfadFaFgbcEaFBGCGcEfefdfBeBeefcgCdFfEaGbGeEeEaFaFBGFBGbHaGaFDDFEDcFcGbGcE#1168,238,aaceddeedc#1168,75,abcbgBdEaFebfBdfab#1219,121,abebdfhafCBfCffbddgcfcbgbfCgBgbdFCFaEbCEEBFbCc#1255,171,abaeBfCeBdEeEdCfFeEfDeCfGcFdCeddgbbeDdBcEeFBGaEebfEbDfDd#1524,494,aaab#1471,440,bafbeehcibcd#1361,582,aaHbIaIdIBJDFEIBKBICIaJcJbFfIbHeJbJaJCJBIcHeBgFdJcJcJcHcGFEEaGeEEFIDIcIaIaIcDfKaHdGaICHCEEJBDEHCHBFCCB#1018,573,abEdCeGCHaGcFfGdGfIaICJaFeGcFEFdEfEgFfFfGfIeGefeIBIDGDHDGbHBfeFbJbCaDcFCHcdfEfHbJcIaFCGDJBKCIBGDKaKCIBHBIbFCbEdBcDhDJaHCdFHDCDgDhCcFHDIaGCJcFeHaGCIcFCHEIdEBDbFeHeJBGdGCGcFBEDIDFDHCcGFEFfGbDFEFcFEFdDcFfCjBeFfFGBgEca#566,489,aBDEGDGcFeGcHdBeHcGbHCEdHdHcIBHcHcFC#446,550,aabdfeibfdafbdDdgeEcHdHcHaFeIaIaIbCfDfJaDfadFfIBIBHaCfDfibicCeIcEeDgDeafGeJaFcJcDeEeafGeeeCeCgge#322,704,bbfejejfifhegfDgKdBeafCgEdafeeFgGfdfhgIeKfbfjekejbBb#338,805,BbfeJeMdOCGFCGIEOdMBJeLbKBBGJBOaCGNaHFcGIFGFHDBGFFCFbGMaIECGaGcGaGhEGEdGEGGDaGFBEB#282,767,abEebfDgDedgJeOdJfEb#88,511,BbceIbbfFegdEfbeDeGaeefedefdbgefaeJbHcHcHcHeDaEdHdGeGcab#37,495,BaGBHbGdGcHCHcHbHbDdBb#u496,BaCb#86:434,BaafeeBeafbfEffcafdfafgeEeEcIBGaEdED#719,294,abbfbffdgdfcBfDcBhDdGdFeCfFfcffedfCfHbCfagCgbfCdBgedcfbgcfBfBgHBFeGdFeGbHcHcEdHaFCIaGDEEHB#567,349,aaDeEfCeCfbfDfFdGeFcBfEdCeafdeedBfcdGbEeEdBfCfCfDdaeBgBeddfbeEgEhagcgdgegDaEDDfEeB#874,435,BaFbHCDdGCGDGDGbagbgDdEeGECEFCGDDCGaGDFdGbHbIbFDHBCFDFGDHCCDFEFbGbFd#870,432,aBFBIaIaHCEDFCaEdGCFFEbFGDHbaEdEGDEDCFaGFDEbEbGDaDGBFBEFBGBEHCHBIaGBHaHBHbHdGb#828,469,abgBgbfcebdeGbHcCfDEGBEeEbgefdDb#879,377,BaEcDeGbGdBfBgbfgeCeDdGdGbbffegbbcab#859,460,BaGBIaEaFcGaFbGaIBBfecgafBdcGceeDeFEHbCFECCBbaBCBDHBHBbEgCaEeFEFDFaC#936,493,BaFcGdIcIaIbIBIbGBHdHaGCaGIbHdIaGCBEFCGEGCGDFDIcIaHbBgGdbeBgEdFfGaJaIaIBIaFfEfCb#684,532,BaGCJCIBHCaGaGaGaHaGaGaG#776,436,aaaeCeGcHdGdHdGeGdGeDfDfFfGaIaDfacDfIcGdGaeEGcEEGCCFCEJbHaFfFeHdIBHDDD#541,489,aBaEdFHbGdHBHBIBGcGdHBGa#543,454,aabeCeGcBdCeDeDeBcBb#538,453,abBeFeFcFB#523,462,abEdIbDfcfDd#523,433,BbFCDdHaHbGDEbIBIaHDHCIaHdHDGbFCaEFEDa#327,490,BaGaGaHDeEDEEE#307,487,BaBDGCHbGcGBIBGBHCGCGBCEEFDDFC#166,629,aabFBGdEdFBFeEBGGbFCIDHCGBeEbFhEgECDFECEbEGbHaHDHcFDEdIbFaEbcBCBIaCa#74,577,abadBfBfDecdBfecfddeBcdfDe#173,593,baechDgCcFedhBdDhBgEfBgCeaiahbiDiCBfdfhegeBeEfagEedeefCfDgEfJaKaLaKbBa#122,547,aBCDCDGaEbCFFcEeEFHBEa#266,634,BbceHdKcGb#311,650,CaGdJdHcJBKbLaJDCB#319,671,BaIaHeIcKBBB#371,608,BaIaFFCFHcHbHaHbFaHcKbJbKBGDEB#263,573,aBCEFDHcJaGFIBHCFCJbGdBfab#220,578,BBGCFEIBGBIaIcFCHCFc#198,567,aaaFbFHBaEDEEDJBHCIbJbIcEdIBHBGaHdaf#112,549,aaBaaaababaaaa#160,532,baDdaece#188,547,badDbBbBCbFCEDEECEGcHBGa#328,655,BaFDIBEEbEHCEEbFHbGDJaFB#658,292,BBEBCBaGaDDCCGCGDDHbGbHbGbFeEfDfBc#619,194,abCeDgCfDgCg#644,265,aBdEcFCGCGCGDEHCGCGCGCGCGCHCGBHaGBGBGDFEEFDFGBEdHaGbHbGBGaGbCFBFDC#565,333,BaGaEeGcHaHbHaHcFeGeFdFeGeGdGdGdGdHbEb#408,343,bBfahBfeeeibdfBeEfDehchbgcfeCdCgCd#494,433,aBEEHCBGaGBGDHHDHDHDGEGDHDFDHCGeFBaGBFaGDGBGCFaB#407,344,abBfDfCgCe#409,386,bafbfeceecBgFbaa#416,381,abafab#564,348,abFbHbEEDGCB#71:630,BbFbHcHCBeeddd'
-  //待确认国界(南联盟及南美洲部分国家)
-  + '#220,536,aBcEdDDFGdHaIbHaGBEBdFdEfFgEeEaC#267,560,aBGCEEEFFFFDHCIbHDICIcGdFd#333,510,BaGcGcIaIBGEIbIaIbHbCeaeGaGbCdDdGeEgCb#346,527,abFcJCDgahDgEgEgIdICICHbJaJbGcFd#245,477,BaEdagBgFeFbEFbE#268,482,abafFeafefHcafbfce#215,497,baaeefcccfBgBe#812:128:bacFdFdFbFDFBGdFDFDFbEBGcFdCDFEEaEEEEFCB#637:299:aaBEaGEEECDEFbHBGBHbHbCcdebfeedfFeHbIbHcFeHeEeEfFfDfEecgcgbgdfcffdhbgbhbgBgCfEbD#680:399:abCebhdeagBgcecgafce'
-  //非洲国界
-  + '#26:409,aafDaFbFbGbFfFBEGBHaHBCEHBBFaEHCGBCGGDHBGCHaFDGDFEaHaGaHaGBGHaIaHaIaHaBGaGaHaGBFHaEEBGaGbGECGaHaHaHaHaGaDFaC#450,210,BaDFFBEDFCCFaFCGCGBFbHBFCFBHGBDFEFBGBFFaCFBGBGaGDFGbEFeEgCdFfEgEaGdGfabGBDHaHaFDEEFDFbHCEBFbGbEBFdEeFeFCFBGbEfFeCgGdEeCgFeFdBgFdHbCfFbagbgDfEfBgEeagDfDcDdfeChfeafdecgfcgbbfagagahagahagaggagcagagagcehahahahagahahahahahafcdChahagDgacfgcdgfb#292,257,aaafahagahagahahagahahahagahCgBgdfCgde#101,431,aBDDaDCGbGaFEFEEaGdFfEdFgDbGcGbGaFcFdGaGaHaGaGbFFEbFeFbHeEgagEeDcFGDFDFEGDGDFDFDGEFDFDFEFFFEFCGCHBGBHCCfafGcFeGbFeCfFdFdFeGdFeFdGeFeGdGeFdGeGeFdGeGdFeGdGdGeDb#49,223,aaaGaGaHaGBGBGEEEDHaHaGBGCGBHaFbGCGCGCEEFCDFDDECFdEEaFBEEEGCbDCGBFEDFBBfECEDEaFaDbDfCcadCeCfDfDBEDGbFDEeECBfagEeDdafDfddcgeefDdagbhaedfCgahahahahagabgCfBgBhagBgBgagBhBgBgagBgagBgBgBhagfbhaia#143:172,abEdEdEfDeFcEeHaGBGaFCCE#196:152,abfagbfcfcfCgBcdGaFcGbFCHaCa#133:145,aaFaGBGcEcHaHaGaHCGBGBCa#160:148,aBaEaDDEGCEDDE#93:119,aBCEdEcEBEbEGbcDaFFCaB#134:81,bacefedfdeEBbeBfCeEfGcFCFCEEEDBB#88:51,aaagcfBfEdEeFcdfBgEbDEFdagCfFbDa#280,228,BaEcGdGdFdGdGdGdFdGdGdGcGdGdGdGdGdGDGDFCGBFfGcHbGb#135,387,aBBECFGDFECFbFEFEC#36:60,aaebCfCeCgbfdgbfeeBgCfBeEfGaGCFBEeEdDc#d175,aBBFcFeEeDaBcFfEgbBEeFEFGBEBDEGbHbFCHaGaHaGaaGbFaG#159,160,BaECFDFCGcHbGaHBEEGBGbGdFbGCGaDfGcGcGCHaDFCGDEBGCaFeFbCE#C130,bBbBaFeEaGbCaFaFdEBGbFCGdFeDbB#l128,aaCFeEdFbGcGaGaGaHaFcF#42,136,aaaFcGCEBFDECGEDBFbGaGaGaF#164,153,aBbFeDbGCEFCDFCGDFCFDECGFDBGDFCFCEFBEeEaFaEEEDEFCECGCE#267,128,BaFaGBBFEEFEEEEDGBHBDCaEEFGaGCFCFBEbFDFcBfCgFdEdEfbfgagadcDeCgagagCfEeEeEdDfCgdecfefefffeecgagbgagbgbgcgDeCfEfagBgBf#181,88,BBCEDEDGDEcEaFbHeEbFeEfEcFaFaGFcFcFaGcHBFbGaGbHaFCHaHaDd#320,59,aaFcFCFcGbEDFBFcFDGCEaFBCFGaGbGcGaEfFdFBEEEEaGBEEbGbGBFBCFCGCE#503,148,BaDDFbFeDfFdDfGdFdGaFbFBFcEcDFDBEaFa#495,145,BaDEDFaGeCgbfcbc#501,128,aaDFdFeEeFeEgCgCgCgCgCgChacBEFEEEEFEEFEEEEEFHbGBGBFEFDGBEFDFEEBHaHaGaHaHaHcFeFbC#488,46,aaFaGdFBGCEFFaHbFbFdGdFdHaDc#458,54:BaEdFdFdEfafGdFdFdGdFdFdGdFdagagcfeededfagBfEfCfCeCfaa#360,41,baCFaFdEcEEEEEEEDFCFBGBGBGEEBGBFdEaHcGBGcGbGaGeFeEcGdGDCGBHBECDFEEdEaGaGCGaGeEfDdbeBaHBGDcGBDfCeFdFbEeEeDFGbGbFdBeGCEcDeFBGCGbFabfBgDfBfbgagCgBfGaHaCeGBFCBFCEGaGaGBDdDfCfDfBgGcHBGaGaHbGBGaGC#320,58,abEcGCFcFbFBEDFbECGBFCEbDDEEGcGbFbFcEeGcFCDFDEaGaGDGDFaGCGaFBGBGCFEEFDDGEEaHaGCFEEEDFEEDCeDcFBCEFcEDDEBGDa#153,54:BaDdFEEDaB#155,zaaCFbFfbfaeEaFFDBGeDdEaGBGDFDDCeFDEdFdaFFBFaBEgDBFDDFaCD#132,zaaaGaHGaGaFaDa#356,28:aBBDeDBDDEDGEDFB#396,MBaFaHaGaHaHaGaFDEBDa#339,32:aadbfBcffagaBgBfDe#472,122:BBEDGCGCFDGcEEGCGbGaFdGCDa#407,135:aaEDBFbGaHfCeFeFdFBGaGEDDEbGCaEeEeCfcfbgBfGaEaEfEcCedeagfdCdbfagafeeEeCgDc#396,113:BaEbFcGcGcEcFeFbBd#384,313:BaGaCeBgBfbhBgBgDeBgCgdfeeefcecfcfcfDeafcebfbgBgafFcHbFdFcGaCfCgedgbgcgdgbgcbb#355,182:BBFbGBFDCFFEGCDFFFEDGbGaGbGdGbGBGaEfFeEfBgagahagagahfbhahaecbfBgbgBg#273,206:aaFBGBHBGBGBGdGBHbGcFdHaHaHaHaHaHaHaFdGcFCGaFB#365,261:aaFbGBGcGbEeGbGcDfagFbCfGdFdCfCgEfCe#294,207:BBEBFBGDDBFeGBGBHBGBaHaHaGaHaHaGEDHaBFaHaHaGaGaHaHaHaHaHaGEEEDGBHaGbDeDfEEED#342,259:aaECFCGDDFFCFEBGEEHCCFCGHaGaGbGeGCCGEEFEFCHaDccfBgDfEfCb#375,313:BaBEGBGdCedgeffDca#328,358:BaFcDfEffeefgcgafDcFDGGCEDCD'
-  //美洲国界
-  + '#782:522,baCeEeEdagagCgHaGcGDFFDGBFEEFCFDIaJaIaJaIBGEFDFFGDJaIaICdGFDHDICIBHDIDGedeffcgcfCgBgCgGeGdEcDgHbFfIdHdIdHdIcICJBIbHaHbGbEdJbGaJcBgECHBJaKaJaKaJaKaJaJaKaJaKaKaJaJaKaJaKaJaKaKaJaKaKaKaJaJaKaKaJaJaJaKaJaIBaECEJbGc#1524:638,BbgdbgbfIeJdHdCfGfFfFfIeGfFeKaEEJDFcIfIeBeLCKbBgagahagagagagahagagahagagagagahagae#1133:303,BaEaHbGcGdDgBgEeEeEfCgFeFeHaGBDFEDGcFdFfCfEfFdGeFeHbIaECFDHaIaHaIaHcHcGcHcHcHdDdIBHaHBEa#1030:216,BaDEECFCHaHaFCCFaCeDfECFHaGaEFBFaGBC#1029:184,BBEDFEBFEDDEEDaB#1024:156,aabfFcFaFdEc#970:175,BaEBGBFCGbCFEDECEaGBaGEDCa#1038:186,aaDcbgahagab#963:112,BBDaaFaFBEbD#976:128,aBECFdFaGcEB#903:101,aabEaFDECBCC#700:100,aBbDEDEEaFdCFDFCaFBFfEdFEEECFCFCFBCEEbFbFbFcFbdEeEbGbGgBaDGCCFEBECDEEDDeFDFdEfCfBgEeCceeCgDeBgbgcgcfEdGCGaGaEdEfFcGaGaGaEeBgafDfDeEbcecgbgdffddfgcba#780:oBaCdCfDdEDEBEBHaGaCFeCeEDBGBBFbGeEcGBGBGBGBHBGCDEeDbefdgFdEdGBFcECGBFbBfFdCfGcCfFeFdFbFdFBGaFdEeFcFdCc#623:394:abBecebfFdFfFeFdFcEcDbFfFeGCBceeffdeffddededfdfcedbfbgDgEbEccfbgafGbGBCgBfBgEdFcGBHaFcbgbgBeCfddCfcfcfdfDgEdFeagaeGaHaHaBgCfcdBgCfBfGdFBGcEdGdEcGdFaFdEcDdBgBgcfBgFaGaGCFEFDFBEFFbGaHbFCDeagbgDbFDGCFcDfHaadBfEeDfCebebeeececgcfdefdgcgcfcfaeBab#602:49,aaDEDFDFCFEEFbGbGCEdFbGCFacEFCFaGbEDFCFBDDGcEeCfCfagbfdfCfFccfEdFa#667:69,aaBFaEFBCECGcFdFeCcFdGeDba#630:67,aaCEDFaGbGeFCFCFCE#878:BBaDCeDBFCGEEEFEEGCFCGCCFCCDFBGEEFdDdGbBcbdafBb'
-  //中国国界
-  + '#1449,465,aaeegdgdfdfeeffChCgcDfiagdfccffBdDBdhccfafagDghcfdiCfcefdfcecfcggdBgfdIBICIBFEIBIbFdBfBfGbGeGbGdJaEfBeCfDfBdFfBeEfEcGeJaIdIaJaJCJCHEfCdFEEFFEFEFaFHCGDIBJcEFEFDGDEfFhciBgdiagDgEeFCEHbHaICFCIBFFFEIBHCGEHCIcHcGEBFeFCEICEFHEHCIaIaIaICICHDHCFcJaHcHcHdHcIbIBIaIaIbIbJaEeDgEfDdHcGdIdIaIbIbGdbfbfbgFeDgGcHcHdHdDeDeIBBFHDHDbFaGGDIaJbHcDGDFCGcEFCGbICIBBDcEcGdFCFCDCEBFHDHCGDGDGBIBCGHBEcGBDBHDEEDEbEbFfahCbFaGaEECgafEgCBGgCfChChabFcFgDBDBFeEcGBFEcEBcFcEbFfEfafEgCfEecfbeDgDfDfEgbcFgDfBdCeCeDdafbgCgbhbfBBGeabefffahCfCfbbFfCbFgagahbeffcgdfegagBgDebcfdaeEcFeBbGaGCEBEEDEDBFBFaFdagbfaaFbFfBbECFcDgBcFfBfcdDdCdaagCfdcgdfafaeaeBedfadegceEgBgaDFcFeCeDgacB'
-  ;
-
-
-ditu1 = dituJM(ditu1, pi2 / 4200, Math.PI / 2100);
-ditu2 = dituJM(ditu2, pi2 / 4200, Math.PI / 2100);
-ditu0 = ditu0.split(",");
-for (var i = 0; i < ditu0.length; i++) ditu0[i] -= 0;
-
-
-
-var touY = {
-  MollY: new Array(),
-  MollCZ: function (W) { //插值法求摩尔威特投影的y值，W在正负pi_2之前
-    var i, N = 100, B = this.MollY, f = 1;
-    if (W < 0) W = -W, f = -1;
-    if (W > pi_2 - 1E-10) return f;
-
-    if (!B.length) { //创建插值表,当N为100时，精度为10^-7，在于80度的高度纬区精度降为10^-6，88度为10^-5
-      for (i = 0; i < N; i++) {
-        var y0 = 0, y = i / 100, c = pi_2 * sin(y * pi_2);
-        while (abs(y - y0) > 1E-12) {
-          y0 = y;
-          y += (c - asin(y)) / sqrt(1 - y * y);
-          y /= 2;
-        }
-        B[i] = y;
-      }
-      B[N] = 1;
-    }
-
-    var n = W / pi_2 * N, k = int2(n + 0.5);
-    if (!k) k = 1; if (k >= N) k = N - 1;
-    n -= k;
-    var y2 = B[k], a = y2 - B[k - 1], b = B[k + 1] - y2;
-    return f * (y2 + n * (a + b + n * (b - a)) / 2);
-  },
-  toxy0: function (J, W, a) { //平面正投
-    J -= this.J0 + pi_2; //图中的经度自西向东测量
-    var x = Math.cos(W) * Math.cos(J), y = Math.cos(W) * Math.sin(J), z = Math.sin(W);
-    a.x = x;
-    a.y = this.cosE0 * y + this.sinE0 * z;
-    a.z = -this.sinE0 * y + this.cosE0 * z;
-  },
-  toxy1: function (J, W, a) {//斜轴等距方位投影
-    J -= this.J0;
-    var cosJ = Math.cos(J), sinJ = Math.sin(J);
-    var cosW = Math.cos(W), sinW = Math.sin(W);
-    var L = Math.atan2(this.sinE0 * sinW - this.cosE0 * cosW * cosJ, sinJ * cosW);
-    var B = Math.acos(this.cosE0 * sinW + this.sinE0 * cosW * cosJ);
-
-    a.x = a.y = 0, a.z = -1;
-    if (B > Math.PI - 0.1) return; //接近180度失真太大，不必计算
-    B = B / Math.PI;
-    a.x = B * cos(L), a.y = B * sin(L), a.z = 1;
-  },
-  toxy2: function (J, W, a) {//斜轴等积方位投影
-    J -= this.J0;
-    var cosJ = Math.cos(J), sinJ = Math.sin(J);
-    var cosW = Math.cos(W), sinW = Math.sin(W);
-    var L = Math.atan2(this.sinE0 * sinW - this.cosE0 * cosW * cosJ, sinJ * cosW);
-    var B = Math.acos(this.cosE0 * sinW + this.sinE0 * cosW * cosJ);
-
-    a.x = a.y = 0, a.z = -1;
-    if (B > Math.PI - 0.1) return; //接近180度失真太大，不必计算
-    B = Math.sin(B / 2);
-    a.x = B * cos(L), a.y = B * sin(L), a.z = 1;
-  },
-  toxy3: function (J, W, a) {//斜轴等角方位投影
-    J -= this.J0;
-    var cosJ = Math.cos(J), sinJ = Math.sin(J);
-    var cosW = Math.cos(W), sinW = Math.sin(W);
-    var L = Math.atan2(this.sinE0 * sinW - this.cosE0 * cosW * cosJ, sinJ * cosW);
-    var B = Math.acos(this.cosE0 * sinW + this.sinE0 * cosW * cosJ);
-
-    a.x = a.y = 0, a.z = -1;
-    if (B > Math.PI - 1) return; //接近180度失真太大，不必计算
-    B = Math.tan(B / 2);
-    a.x = B * Math.cos(L), a.y = B * Math.sin(L), a.z = 1;
-
-  },
-  toxy4: function (J, W, a) { //摩尔威特
-    W = rad2rrad(W);
-    J = rad2rrad(J - this.J0);
-    a.y = this.MollCZ(W);
-    a.x = Math.sqrt(1 - a.y * a.y) * J * 2 / Math.PI;
-    a.z = 1;
-  },
-  toxy5: function (J, W, a) { //正轴等距圆柱
-    a.x = rad2rrad(J - this.J0) / Math.PI;
-    a.y = rad2rrad(W) / Math.PI;
-    a.z = 1;
-  },
-  toxy6: function (J, W, a) { //正轴等角圆柱
-    if (abs(W) > 1.5) { a.x = a.y = 0, a.z = -1; return; }
-    var f = 1; if (W < 0) f = -1;
-    a.x = rad2rrad(J - this.J0) / Math.PI;
-    a.y = Math.log(tan(pi2 / 8 + abs(W) / 2)) / Math.PI * f;
-    a.z = 1;
-  },
-  toxy7: function (J, W, a) { //多圆锥
-    J = rad2rrad(J - this.J0);
-    var C = Math.cos(W); //纬线长度
-    var v = Math.tan(W); //纬线曲率
-    if (abs(W) > 0.002) {
-      var s = C * J * v, l = 1 / v;
-      a.x = l * Math.sin(s);
-      a.y = W + l - l * Math.cos(s);
-    }
-    else a.x = J, a.y = W + J * J * v / 2;
-    a.x /= Math.PI, a.y /= Math.PI, a.z = 1;
-  },
-  toxy8: function (J, W, a) { //中国灯笼投影
-    J = rad2rrad(J - this.J0);
-    var C = Math.cos(W * 2 / 3);     //纬线长度
-    var v = Math.sin(W * 2 / 3) / 5.3; //纬线曲率
-    J *= (1 - abs(J) / 11 / Math.PI) * 1.1;
-    W = (W + 0.014830286 * W * W * W) * 1.2;
-    if (Math.abs(W) > 0.002) {
-      var s = C * J * v, l = 1 / v;
-      a.x = l * Math.sin(s);
-      a.y = W + l - l * Math.cos(s);
-    }
-    else a.x = J, a.y = W + J * J * v / 2;
-    a.x /= Math.PI, a.y /= Math.PI, a.z = 1;
-  },
-  toxy: function (J, W, a) { a.x = J, a.y = W, a.z = 1; },
-  setlx: function (lx, J0, W0, jb) {//设置类型, jb为局部显示参数
-    this.tylx = lx, this.J0 = J0, this.W0 = W0;
-    this.cosE0 = sin(W0), this.sinE0 = cos(W0);
-    if (lx == 0) this.toxy = this.toxy0;
-    if (lx == 1) this.toxy = this.toxy1;
-    if (lx == 2) this.toxy = this.toxy2;
-    if (lx == 3) this.toxy = this.toxy3;
-    if (lx == 4) this.toxy = this.toxy4;
-    if (lx == 5) this.toxy = this.toxy5;
-    if (lx == 6) this.toxy = this.toxy6;
-    if (lx == 7) this.toxy = this.toxy7;
-    if (lx == 8) this.toxy = this.toxy8;
-    this.x1 = jb[0] - jb[2], this.x2 = jb[0] + jb[2];
-    this.y1 = jb[1] - jb[3], this.y2 = jb[1] + jb[3];
-  },
-  lineArr: function (d) { //画曲线
-    var p = new Array(), k = 0;
-    var i, h, G = new Object(); //h为线头标记
-    var lx, ly, dd = 0;         //某条线的最后一个画线点(lx,ly)，dd为画线状态
-    if (d[0] != 1e7) h = 1;        //不以moveto开头的数组
-
-
-    for (i = 0; i < d.length; i++) {
-      if (d[i] == 1e7) { h = 1, dd = 0; continue; } //新线开始，清除最后画点
-      this.toxy(d[i], d[i + 1], G); i++; //在flash，这么写this.toxy(d[i++],d[i],G);不可正确运行
-
-      if (G.x < this.x1 || G.x > this.x2 || G.y < this.y1 || G.y > this.y2) G.z = -1;
-      if (G.z < 0) {//不显示的点
-        if (dd % 2 == 1) dd = 2;
-        continue;
-      }
-      if (dd % 2 == 0) dd++, h = 1;
-
-      if (this.tylx == 4) { //摩氏地图投影
-        if (abs(lx - G.x) > 1 / 3) h = 1; //防止出现水平回扫线(地图被边界切割时会有此问题)
-      }
-      if (this.tylx == 5 || this.tylx == 6) { //正轴等距或等角圆柱
-        if (abs(lx - G.x) > 1 / 3 || abs(ly - G.y) > 1 / 3) h = 1; //防止出现水平回扫线
-      }
-      if (this.tylx == 7 || this.tylx == 8 || this.tylx == 9) { //多圆锥
-        var cy = abs(ly - G.y), cx = abs(lx - G.x);
-        if (cx > 1 / 3 || abs(G.y) > 1 / 2 && lx * G.x < 0) h = 1; //防止出现水平回扫线
-      }
-      if (h) p[k++] = 1e7, h = 0;
-      p[k++] = G.x, p[k++] = G.y;
-      lx = G.x, ly = G.y;
-    }
-    return p;
-  }
-};

@@ -54,39 +54,6 @@ function timeStr2hour(s) {//时间串转为小时
 }
 
 /*********************
-工具函数：cookie读写函数
-*********************/
-var storageL = {
-  existStorage: function () { // 判断浏览器是否支持localSotrage
-    return window.Storage && window.localStorage && window.localStorage instanceof Storage;
-  },
-  setItem: function (name, value, t) {  // 写localStorage
-    if (!this.existStorage()) this.setCookie(name, value, t);
-    try { localStorage.setItem(name, value); }  //safari无痕模式下调用localStorag.setItem会出错
-    catch (e) { console.error('localStorage.setItem错误,', e.message); }
-  },
-  getItem: function (name) { // 读localStorage
-    var value;
-    if (!this.existStorage()) return this.getCookie(name);
-    try { value = localStorage.getItem(name); }
-    catch (e) { console.error('localStorage.getItem错误,', e.message) }
-    finally { return value; }
-  },
-  setCookie: function (name, value, t) { // 写cookie
-    var d = new Date();
-    d.setTime(d.getTime() + (t * 86400 * 1000));
-    var expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + value + "; " + expires;
-  },
-  getCookie: function (name) {// 读cookie
-    var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
-    if (arr = document.cookie.match(reg)) return arr[2];
-    return null;
-  }
-};
-
-
-/*********************
 给select加option等
 *********************/
 function addOp(sel, v, t) { //给select对象加入option
