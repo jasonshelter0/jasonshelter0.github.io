@@ -1531,19 +1531,3 @@ var XL = { //日月星历基本函数类
     return re;
   }
 };
-///////////////////////////////////////////////////
-// 获取日程的函数
-const scheduleMap = new Map([
-  ["2024.11.07", "今天"],
-  ["2024.11.15", "材料提交"],
-  ["2024.12.21", "考研笔试"],
-  // 添加更多日程...
-]);
-// 获取日程的函数
-function getSchedule(jy, jm, jd) {
-  // 格式化输入日期为 "YYYY.MM.DD"
-  const dateKey = `${jy}.${String(jm).padStart(2, '0')}.${String(jd).padStart(2, '0')}`;
-  
-  // 使用Map快速查找日程
-  return scheduleMap.get(dateKey) || "";
-}
