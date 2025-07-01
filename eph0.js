@@ -561,6 +561,10 @@ var JD = { //日期元件
     if (special == true) return chnStr.slice(1);
     return chnPreStr + chnStr;
   },
+  NumberToChineseSplit (num, nyflag, separator = '<br>'){
+    const hanzi = JD.NumberToChinese(num, nyflag);
+    return hanzi.split('').join(separator);
+  },
   JgetWeekName: function (y, m, d) {
     // document.write(JD.JD(y, m, d) + 1.5 + 7000000)
     // document.write(JD.getWeek(JD.JD(y, m, d)))
@@ -577,14 +581,30 @@ var JD = { //日期元件
     var idxW = int2((- jdFirstSCOSSLOP - (idx - 1) * 63 + jd) / 7) + 1;
     return [idx, idxW]
   },
+  SCOSSLOPInfo2JArr: function (seq, idx) {
+    // by default, idx >= 1, 1 <= idxW <= 63, both starting from 1
+    var jdFirstSCOSSLOP = -141 + 2460121.5; // 03-09-01(2023.02.05)
+    var jd = jdFirstSCOSSLOP + 63 * (seq - 1) + idx - 1;
+    var gDate = this.DD(jd);
+    var gy = gDate.Y;
+    var gm = gDate.M;
+    var gd = gDate.D;
+    return [gy, gm, gd]
+  },
+  JDgetSCOSSLOPSeq: function (jd) {
+    var jdFirstSCOSSLOP = -141 + 2460121.5; // 03-09-01(2023.02.05)
+    if (jd < jdFirstSCOSSLOP) return 0;
+    var idx = 1 + int2((-jdFirstSCOSSLOP + jd) / 63);
+    return idx
+  },
   JgetSCOSSLOPSeq: function (y, m, d) {
     var jd = JD.JD(y, m, d);
     var jdFirstSCOSSLOP = -141 + 2460121.5; // 03-09-01(2023.02.05)
-    if (jd < jdFirstSCOSSLOP) return '[新九周计划未开始]';
+    if (jd < jdFirstSCOSSLOP) return '[新九周计划（规划）未开始]';
     var idx = 1 + int2((-jdFirstSCOSSLOP + jd) / 63);
     var idxW = int2((- jdFirstSCOSSLOP - (idx - 1) * 63 + jd) / 7) + 1;
-    if (idx < 21) return '新' + this.NumberToChinese(idx, 0) + '九第' + this.NumberToChinese(idxW, 0) + '周';
-    else return this.NumberToChinese(idx, 0) + '九第' + this.NumberToChinese(idxW, 0) + '周';
+    if (idx < 14) return '新' + this.NumberToChinese(idx, 0) + '九第' + this.NumberToChinese(idxW, 0) + '周';
+    else return this.NumberToChinese(idx, 0) + '九规划第' + this.NumberToChinese(idxW, 0) + '周';
   },
   JgetSCOSSLOPSeqEng: function (y, m, d) {
     var jd = JD.JD(y, m, d);
@@ -614,7 +634,7 @@ var JD = { //日期元件
   },
 };
 
-function gDateComp(gDate1, gDate2) { // returns gDate1 is earlier than gDate2
+function gDateComp(gDate1, gDate2) { // returns whether gDate1 is earlier than gDate2
   var gy1, gm1, gd1, gy2, gm2, gd2;
   gDate1 = String(gDate1).replace(/[^0-9:\.]/g, '');
   gDate2 = String(gDate2).replace(/[^0-9:\.]/g, '');

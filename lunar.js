@@ -1103,7 +1103,6 @@ function write_everything_NC(ny, nm, nd) {
   nd = Number(nd);
   var arrJ = JD.NJ(ny, nm, nd);
   document.write(arrJ[0].toString().padStart(2, '0') + '.' + arrJ[1].toString().padStart(2, '0') + '.' + arrJ[2].toString().padStart(2, '0') + '____');
-
 }
 
 function NC_HTML (Ny, Nm, curJD) {
@@ -1194,4 +1193,90 @@ function NC_HTML (Ny, Nm, curJD) {
   pg11 = '<table border="1" cellpadding=3 cellspacing=1 width="100%">' + ta0 + '</table>';
   return pg11;
 
+}
+
+function SCOSSLOP_HTML(seq, curJD) {
+  const style = {
+    head: ' style="font-family: 宋体,serif; font-size: 14px; text-align: center; background-color: #8796DA; font-weight: bold" ',
+    body: ' style="font-family: 宋体,serif; font-size: 12px; text-align: center" ',
+    date: ' style="font-family: Arial Black; text-align: center;font-size: 12px" ',
+    schedulePrefix: ' style="font-family: 宋体; text-align: center;font-size: 11px; color: #FFFF00; font-weight:bold; background-color:',
+    cur: ' style="font-family: Arial Black; text-align: center; color:#FFFF00; font-size: 18px; font-weight: bold" ',
+    ncDay: ' style="font-family: Arial Black; text-align: center;font-size: 20px; color: ',
+  };
+
+  const ncMonthColour = {
+    '1': '#CE3738',  '2': '#FF8000', '3': '#2D756D', '4': '#2D5F5C',
+    '5': '#243D62',  '6': '#656981', '7': '#AC6A6A', '8': '#BCBA63',
+    '9': '#95B26F', '10': '#7CC1B3','11': '#3F36EE','12': '#B4A758',
+    '13': '#9B9992','14': '#2D3037','15': '#78979F','16': '#3F4F61'
+  };
+
+  let title = `第${JD.NumberToChinese(seq, 0)}个改革与创新发展九周${seq >= 14 ? '规划' : '计划'}`;
+  let titleFont = title.length > 33 
+    ? '<span style="font-size:12px">' + title + '</span>'
+    : '<span style="font-size:16px;font-weight:bold">' + title + '</span>';
+
+  let ta0 = `<tr><td colspan=8 style="background-color:#0000A0;color:#FFFF00">${titleFont}</td></tr>`;
+  ta0 += '<tr><td' + style.head + '>年月</td>' + 
+         ['日','一','二','三','四','五','六'].map(d => `<td${style.head}>${d}</td>`).join('') +
+         '</tr>';
+
+  // 日期数据列表构建（63天）
+  const dayList = [];
+  for (let idx = 1; idx <= 63; idx++) {
+    let [jy, jm, jd] = JD.SCOSSLOPInfo2JArr(seq, idx);
+    let [ny, nm, nd] = JD.JN(jy, jm, jd);
+    let week = JD.getWeek(JD.JD(jy, jm, jd));
+    let isCurrent = JD.JDarr([jy, jm, jd]) == curJD;
+    let ymKey = `${ny}-${nm}`; // 合并标识
+
+    dayList.push({ idx, jy, jm, jd, ny, nm, nd, week, isCurrent, ymKey });
+  }
+
+  // 预处理：构建年月映射到 rowspan
+  const ymRowGroups = {};
+  for (let i = 0; i < dayList.length; i++) {
+    const ymKey = dayList[i].ymKey;
+    if (!ymRowGroups[ymKey]) {
+      ymRowGroups[ymKey] = { startRow: i, count: 0 };
+    }
+    ymRowGroups[ymKey].count++;
+  }
+
+  // 渲染表格每行（每周一行，7天）
+  let taBody = "", rowIdx = 0;
+  while (rowIdx < dayList.length) {
+    const weekRow = dayList.slice(rowIdx, rowIdx + 7);
+    const { ny, nm, ymKey } = weekRow[0];
+    const color = ncMonthColour[nm];
+    const showRowspan = ymRowGroups[ymKey].startRow === rowIdx;
+    const rowspan = ymRowGroups[ymKey].count / 7;
+
+    taBody += "<tr>";
+
+    // 左侧合并列（如果是首行）
+    if (showRowspan) {
+      taBody += `<td rowspan="${rowspan}" style="font-family: 宋体,serif; font-size: 15px; background-color:${color};color:#fff;font-weight:bold;text-align:center">${JD.NumberToChineseSplit(ny, 0)}<br>年<br>${JD.NumberToChineseSplit(nm, 0)}<br>月</td>`;
+    }
+
+    // 一周 7 天列
+    for (const day of weekRow) {
+      const ndText = day.isCurrent
+        ? `<span${style.cur}>★${day.nd.toString().padStart(2, '0')}</span>`
+        : `<span${style.ncDay + ncMonthColour[day.nm]}">${day.nd.toString().padStart(2, '0')}</span>`;
+
+      const cj = `<span${style.date}>${day.jy.toString().slice(-2)}.${day.jm.toString().padStart(2, '0')}.${day.jd.toString().padStart(2, '0')}</span>`;
+      const schedule = `<text${style.schedulePrefix + ncMonthColour[day.nm]}">${getSchedule(day.jy, day.jm, day.jd)}</text>`;
+
+      let content = `${ndText}<br>${cj}<br>${schedule}<br><br>`;
+
+      taBody += `<td style="font-family: 宋体,serif; font-size: 12px; text-align: center; background-color:#DCDCDC">${content}</td>`;
+    }
+
+    taBody += "</tr>";
+    rowIdx += 7;
+  }
+
+  return `<table border="1" cellpadding=3 cellspacing=1 width="100%">${ta0}${taBody}</table>`;
 }
