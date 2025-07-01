@@ -61,6 +61,101 @@
     .dTop2 {
       border-top: 1px solid #C0C0C0
     }
+
+    .text {
+    text-align: center;
+    font-size: 42px;
+    line-height: 2;
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .native-text-shadow {
+    text-shadow: 0 0 4px #32003C;
+  }
+
+  .multiple-text-shadow {
+    text-shadow: 0 0 4px #32003C,
+    0 0 4px #32003C,
+    0 0 4px #32003C,
+    0 0 4px #32003C,
+    0 0 4px #32003C,
+    0 0 4px #32003C,
+    0 0 4px #32003C;
+  }
+
+  .native-webkit-text-stroke {
+    -webkit-text-stroke: 4px #32003C;
+  }
+  .improve-webkit-text-stroke {
+    -webkit-text-stroke: 8px #32003C;
+    position: relative;
+    z-index: 1;
+  }
+  .improve-webkit-text-stroke:after {
+    content: "字体描边 | font stroke";
+    color: #fff;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    top: 0;
+    -webkit-text-stroke-width: 0;
+  }
+
+  /*没有模糊的字体阴影*/
+  /*上，右移动6px则 右上移动距离x,y 轴移动距离应该为 4px （6 / √2 ≈ 4.23 对角线长度为6的正方形的边长）  */
+  .text-stroke-no-blur {
+    text-shadow: 6px 0 0 #32003C,
+    -6px 0 0 #32003C,
+    0 6px 0 #32003C,
+    0 -6px 0 #32003C,
+    4px 4px 0 #32003C,
+    -4px 4px 0 #32003C,
+    4px -4px 0 #32003C,
+    -4px -4px 0 #32003C;
+  }
+
+  .text-stroke {
+    text-shadow: 0 -6px 4px #32003C, /*上*/
+    4px -4px 4px #32003C, /*右上*/
+    6px 0 4px #32003C, /*右*/
+    4px 4px 4px #32003C, /*右下*/
+    0 6px 4px #32003C, /*下*/
+    -4px 4px 4px #32003C, /*左下*/
+    -6px 0 4px #32003C, /*左*/
+    -4px -4px 4px #32003C; /*左上*/
+  }
+
+  .text-stroke-colours {
+    text-shadow: 0 -6px 4px #ff0000, /*上*/
+    4px -4px 4px #46ff00, /*右上*/
+    6px 0 4px #32003c, /*右*/
+    4px 4px 4px #ffffff, /*右下*/
+    0 6px 4px #ffd500, /*下*/
+    -4px 4px 4px #ee00ff, /*左下*/
+    -6px 0 4px #0021ff, /*左*/
+    -4px -4px 4px #000000; /*左上*/
+  }
+  .svg-text-stroke {
+    margin-top: 100px;
+  }
+  .svg-text-stroke svg,
+  .improve-svg-text-stroke svg {
+    overflow: visible;
+    height: 2em;
+  }
+  .svg-text-stroke text,
+  .improve-svg-text-stroke text{
+    text-anchor: middle; /*文本居中*/
+    fill: currentColor;  /*文本颜色*/
+  }
+  .svg-text-stroke text,
+  .improve-svg-text-stroke use{
+    stroke: #32003C;    /*描边颜色*/
+    stroke-width: 4px;  /*控制描边宽度*/
+    stroke-linejoin: round;  /*描边转角处理方式*/
+  }
   </style>
   <!--js1S-->
   <script language=javascript src=tools.js></script><!--工具函数-->
@@ -68,10 +163,48 @@
   <script language=javascript src=lunar.js></script><!--日历物件-->
   <script language=javascript src=schedule.js></script><!--日程数据-->
 
+  <script language=javascript src=html2canvas.min.js></script>
+  
+
   <!--js1E-->
 </head>
 
 <body>
+<!-- 
+  <div class="native-text-shadow text">
+    字体描边 | font stroke
+  </div>
+  <div class="multiple-text-shadow text">
+    字体描边 | font stroke
+  </div>
+  <div class="native-webkit-text-stroke text">
+    字体描边 | font stroke
+  </div>
+  <div class="improve-webkit-text-stroke text">
+    字体描边 | font stroke
+  </div>
+  <div class="text-stroke-no-blur text">
+    字体描边 | font stroke
+  </div>
+  <div class="text-stroke text">
+    字体描边 | font stroke
+  </div>
+  <div class="text-stroke-colours text">
+    字体描边 | font stroke
+  </div>
+
+  <div class="svg-text-stroke text">
+    <svg>
+      <text x='50%' >字体描边 | font stroke</text>
+    </svg>
+  </div>
+  <div class="improve-svg-text-stroke text">
+    <svg>
+      use 会完全复制 text 中的内容-->
+      <!-- <use xlink:href="#text"></use>
+      <text x='50%' id="text">字体描边 | font stroke</text>
+    </svg>
+  </div> -->
   <tr id=page3>
     <table width="100%" cellspacing=0 cellpadding=0><!--月历表-->
       <tr>
@@ -113,9 +246,12 @@
       <tr>
         <td>
           第<input type=text id=SCOSSLOP_seq size=4 value=14>个九周规划（计划）
-          <input type=button value="确定" onclick='getLunar()'>
+          <input type=button value="确定" onclick='getSCOSSLOP()'>
           <input type=button value="序列-" onclick='changeSCOSSLOPseq(0)'><input type=button value="序列+" onclick='changeSCOSSLOPseq(1)'>
           <input type=button onclick='changeSCOSSLOPseq(2)' value='今'><br>
+          <!-- <button onclick="downloadExcel()">下载为 Excel 文件（开发中）</button>
+          <button onclick="downloadAsPDF()">下载为 PDF（开发中）</button> -->
+          <button onclick="downloadAsPNG()">下载为 PNG 图片</button>
           <div id=Cal12></div>
         </td>
       </tr>
@@ -417,6 +553,66 @@ filter: shadow(#333333,135);display:none">
       curJD1 = getCurJD();
       Cal12.innerHTML = SCOSSLOP_HTML(seq, curJD1);
     }
+
+    // function downloadExcel() {
+    //   const table = document.getElementById("scosslop-table");
+
+    //   // 将 table 转换为 worksheet
+    //   const wb = XLSX.utils.book_new();
+    //   const ws = XLSX.utils.table_to_sheet(table);
+
+    //   // 添加到 workbook 并下载
+    //   XLSX.utils.book_append_sheet(wb, ws, "日历表");
+    //   XLSX.writeFile(wb, "SCOSSLOP_日历.xlsx");
+    // }
+
+    // function downloadAsPDF() {
+    //   const element = document.getElementById("scosslop-table");
+    //   html2pdf().set({
+    //     margin: 10,
+    //     filename: 'SCOSSLOP_九周日历.pdf',
+    //     html2canvas: { scale: 2 },
+    //     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    //   }).from(element).save();
+    // }
+
+    // function downloadAsPNG() {
+    //   const target = document.getElementById("scosslop-table");
+    //   html2canvas(target, {
+    //     scale: 2,  // 提高分辨率
+    //     useCORS: true
+    //   }).then(canvas => {
+    //     const link = document.createElement("a");
+    //     link.download = "SCOSSLOP_九周日历.png";
+    //     link.href = canvas.toDataURL("image/png");
+    //     link.click();
+    //   });
+    // }
+
+    function downloadAsPNG() {
+      const target = document.getElementById("scosslop-table");
+
+      // 包一层，设置缩放比例
+      const scaled = target.cloneNode(true);
+      const wrapper = document.createElement("div");
+      wrapper.style.transform = "scale(1.1)";
+      wrapper.style.transformOrigin = "top left";
+      wrapper.style.width = "fit-content";
+      wrapper.appendChild(scaled);
+
+      document.body.appendChild(wrapper);
+      html2canvas(scaled, {
+        scale: 3,
+        useCORS: true
+      }).then(canvas => {
+        document.body.removeChild(wrapper);
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "SCOSSLOP_九周日历.png";
+        link.click();
+      });
+    }
+
 
     getLunar(); //调用月历页面生成函数
     getNCmonth();

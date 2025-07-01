@@ -1201,8 +1201,8 @@ function SCOSSLOP_HTML(seq, curJD) {
     body: ' style="font-family: 宋体,serif; font-size: 12px; text-align: center" ',
     date: ' style="font-family: Arial Black; text-align: center;font-size: 12px" ',
     schedulePrefix: ' style="font-family: 宋体; text-align: center;font-size: 11px; color: #FFFF00; font-weight:bold; background-color:',
-    cur: ' style="font-family: Arial Black; text-align: center; color:#FFFF00; font-size: 18px; font-weight: bold" ',
-    ncDay: ' style="font-family: Arial Black; text-align: center;font-size: 20px; color: ',
+    cur: ' style="font-family: Arial Black; text-align: center; background-color: yellow; font-size: 14px; font-weight: bold" ',
+    ncDay: ' style="font-family: Arial Black; text-align: center;font-size: 14px; color: ',
   };
 
   const ncMonthColour = {
@@ -1214,11 +1214,17 @@ function SCOSSLOP_HTML(seq, curJD) {
 
   let title = `第${JD.NumberToChinese(seq, 0)}个改革与创新发展九周${seq >= 14 ? '规划' : '计划'}`;
   let titleFont = title.length > 33 
-    ? '<span style="font-size:12px">' + title + '</span>'
-    : '<span style="font-size:16px;font-weight:bold">' + title + '</span>';
+    ? '<span style="font-size:12px;text-align: center;">' + title + '</span>'
+    : '<span style="font-size:16px;font-weight:bold;text-align: center;">' + title + '</span>';
 
-  let ta0 = `<tr><td colspan=8 style="background-color:#0000A0;color:#FFFF00">${titleFont}</td></tr>`;
-  ta0 += '<tr><td' + style.head + '>年月</td>' + 
+  let ta0 = `<tr><td colspan=8 style="background-color:#0000A0;color:#FFFF00; text-align: center;">${titleFont}</td></tr>`;
+  // 提取首尾日期
+  let [sy, sm, sd] = JD.SCOSSLOPInfo2JArr(seq, 1);
+  let [ey, em, ed] = JD.SCOSSLOPInfo2JArr(seq, 63);
+  let rangeText = `${sy}年${sm}月${sd}日 - ${ey}年${em}月${ed}日`;
+  ta0 += `<tr><td colspan=8 style="text-align: center; font-family: 宋体,serif; font-size: 13px; background-color:#0000A0;color:#FFFF00; font-weight: bold;">${rangeText}</td></tr>`;
+
+  ta0 += '<tr><td' + style.head + '>月</td>' + 
          ['日','一','二','三','四','五','六'].map(d => `<td${style.head}>${d}</td>`).join('') +
          '</tr>';
 
@@ -1257,7 +1263,7 @@ function SCOSSLOP_HTML(seq, curJD) {
 
     // 左侧合并列（如果是首行）
     if (showRowspan) {
-      taBody += `<td rowspan="${rowspan}" style="font-family: 宋体,serif; font-size: 15px; background-color:${color};color:#fff;font-weight:bold;text-align:center">${JD.NumberToChineseSplit(ny, 0)}<br>年<br>${JD.NumberToChineseSplit(nm, 0)}<br>月</td>`;
+      taBody += `<td rowspan="${rowspan}" style="font-family: 宋体,serif; font-size: 12px; background-color:${color};color:#fff;font-weight:bold;text-align:center">${JD.NumberToChineseSplit(ny, 0)}<br>年<br>${JD.NumberToChineseSplit(nm, 0)}<br>月</td>`;
     }
 
     // 一周 7 天列
@@ -1266,17 +1272,19 @@ function SCOSSLOP_HTML(seq, curJD) {
         ? `<span${style.cur}>★${day.nd.toString().padStart(2, '0')}</span>`
         : `<span${style.ncDay + ncMonthColour[day.nm]}">${day.nd.toString().padStart(2, '0')}</span>`;
 
-      const cj = `<span${style.date}>${day.jy.toString().slice(-2)}.${day.jm.toString().padStart(2, '0')}.${day.jd.toString().padStart(2, '0')}</span>`;
+      const cj = `<span${style.date}>${day.jm.toString().padStart(2, '0')}.${day.jd.toString().padStart(2, '0')}</span>`;
       const schedule = `<text${style.schedulePrefix + ncMonthColour[day.nm]}">${getSchedule(day.jy, day.jm, day.jd)}</text>`;
 
-      let content = `${ndText}<br>${cj}<br>${schedule}<br><br>`;
+      let content = `${ndText} ${cj}<br>${schedule}<br><br><br>${schedule.trim() ? '' : '<br>'}`;
 
-      taBody += `<td style="font-family: 宋体,serif; font-size: 12px; text-align: center; background-color:#DCDCDC">${content}</td>`;
+      taBody += `<td style="font-family: 宋体,serif; font-size: 12px; text-align: center; background-color:#FFFFFF">${content}</td>`;  
+      
+      // background-color:#DCDCDC
     }
 
     taBody += "</tr>";
     rowIdx += 7;
   }
 
-  return `<table border="1" cellpadding=3 cellspacing=1 width="100%">${ta0}${taBody}</table>`;
+  return `<table border="1" cellpadding=3 cellspacing=1 width="100%" id="scosslop-table">${ta0}${taBody}</table>`;
 }
