@@ -1,24 +1,28 @@
 (() => {
+  const isChinese = document.documentElement.lang.toLowerCase().startsWith('zh');
+  const labels = isChinese
+    ? { open: '打开导航', close: '关闭导航', copied: '已复制', select: '请选择文本复制' }
+    : { open: 'Open navigation', close: 'Close navigation', copied: 'Copied', select: 'Select text to copy' };
   const navToggle = document.querySelector('.nav-toggle');
   const nav = document.querySelector('.nav');
   if (navToggle && nav) {
     navToggle.addEventListener('click', () => {
       const open = nav.classList.toggle('is-open');
       navToggle.setAttribute('aria-expanded', String(open));
-      navToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+      navToggle.setAttribute('aria-label', open ? labels.close : labels.open);
     });
     nav.addEventListener('click', event => {
       if (event.target.closest('a')) {
         nav.classList.remove('is-open');
         navToggle.setAttribute('aria-expanded', 'false');
-        navToggle.setAttribute('aria-label', 'Open navigation');
+        navToggle.setAttribute('aria-label', labels.open);
       }
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
         nav.classList.remove('is-open');
         navToggle.setAttribute('aria-expanded', 'false');
-        navToggle.setAttribute('aria-label', 'Open navigation');
+        navToggle.setAttribute('aria-label', labels.open);
       }
     });
   }
@@ -52,10 +56,10 @@
       try {
         await navigator.clipboard.writeText(target.textContent.trim());
         const previous = button.textContent;
-        button.textContent = 'Copied';
+        button.textContent = labels.copied;
         window.setTimeout(() => { button.textContent = previous; }, 1800);
       } catch {
-        button.textContent = 'Select text to copy';
+        button.textContent = labels.select;
       }
     });
   }

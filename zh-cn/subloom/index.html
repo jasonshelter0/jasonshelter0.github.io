@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b1c">
+  <meta name="description" content="Subloom 使用手册：在 Obsidian 中整理订阅笔记、预测周期扣费、核实付款并管理提醒。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Subloom 使用手册 — Jason Shelter">
+  <meta property="og:description" content="了解如何使用本地 Markdown 笔记，在 Obsidian 中预测订阅扣费并核实付款。">
+  <meta property="og:url" content="https://jasonshelter0.github.io/zh-cn/subloom/">
+  <link rel="canonical" href="https://jasonshelter0.github.io/zh-cn/subloom/">
+  <link rel="alternate" hreflang="en" href="https://jasonshelter0.github.io/subloom/">
+  <link rel="alternate" hreflang="zh-CN" href="https://jasonshelter0.github.io/zh-cn/subloom/">
+  <link rel="alternate" hreflang="x-default" href="https://jasonshelter0.github.io/subloom/">
+  <title>Subloom 使用手册 — Jason Shelter</title>
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
+</head>
+<body class="docs-page">
+  <a class="skip-link" href="#main">跳转到正文</a>
+  <div class="site-shell">
+  <header class="site-header">
+    <a class="brand" href="/zh-cn/" aria-label="Jason Shelter，返回首页"><img src="/assets/mark.svg" width="34" height="34" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a>
+    <button class="nav-toggle" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
+    <nav class="nav" id="site-nav" aria-label="主导航">
+      <a href="/zh-cn/">首页</a>
+      <a href="/zh-cn/subloom/" aria-current="page">Subloom</a>
+      <a href="https://github.com/jasonshelter0" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      <div class="language-switch" aria-label="语言"><a href="/subloom/" lang="en" hreflang="en">EN</a><span aria-hidden="true">/</span><a href="/zh-cn/subloom/" lang="zh-CN" hreflang="zh-CN" aria-current="page">简体中文</a></div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero" aria-labelledby="manual-title">
+      <div class="docs-hero-inner">
+        <p class="eyebrow">Obsidian 插件 <span aria-hidden="true">/</span> v0.1.0 首个版本</p>
+        <h1 id="manual-title">在 Obsidian 中管理订阅</h1>
+        <p class="docs-lead">Subloom 读取 Markdown 笔记，预测周期扣费，并分别展示已核实的付款与预期扣费。所有记录都保存在你的仓库中。</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#install">安装 Subloom <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="https://github.com/jasonshelter0/obsidian-subloom" target="_blank" rel="noopener noreferrer">在 GitHub 查看源码 <span aria-hidden="true">↗</span></a>
+        </div>
+        <p class="page-meta"><span>本地 Markdown</span><span>无需 Dataview</span><span>Obsidian 1.12.0 及以上</span></p>
+      </div>
+      <div class="docs-hero-art" aria-hidden="true">
+        <div class="art-thread"></div>
+        <div class="art-card art-card-one"><small>下次扣费</small><b>AI 服务</b><span>10 月 31 日 · 20 USD</span></div>
+        <div class="art-center">✳</div>
+        <div class="art-card art-card-two"><small>付款记录</small><b>已核实</b><span>有效期至 11 月 30 日零时</span></div>
+      </div>
+    </section>
+
+    <div class="docs-layout">
+      <aside class="docs-toc" aria-label="本页目录">
+        <nav aria-label="手册章节">
+          <p class="eyebrow">使用手册</p>
+          <a href="#overview">功能概览</a>
+          <a href="#install">安装</a>
+          <a href="#quick-start">快速开始</a>
+          <a href="#subscription-notes">订阅笔记</a>
+          <a href="#payment-methods">支付方式</a>
+          <a href="#dashboard">仪表盘</a>
+          <a href="#payments">记录付款</a>
+          <a href="#reminders">提醒</a>
+          <a href="#schema">字段参考</a>
+          <a href="#troubleshooting">常见问题</a>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <section class="doc-section" id="overview" aria-labelledby="overview-title">
+          <p class="eyebrow">01 / 概览</p>
+          <h2 id="overview-title">了解接下来的订阅扣费</h2>
+          <p>Subloom 扫描当前仓库中任意位置的订阅笔记，根据每篇笔记的原始计费规则计算下次计划扣费日期，并在一个仪表盘中展示即将到来的扣费、付款核实情况和已知的服务有效期。</p>
+          <div class="feature-grid">
+            <article class="feature-card"><span aria-hidden="true">01</span><h3>预测扣费</h3><p>查看每周、每月和每年的扣费安排，以及按币种分别汇总的月度预估。</p></article>
+            <article class="feature-card"><span aria-hidden="true">02</span><h3>核实付款</h3><p>确认扣费成功后再记录付款。预测结果和自动续费设置都不能证明付款成功。</p></article>
+            <article class="feature-card"><span aria-hidden="true">03</span><h3>跟进提醒</h3><p>通过应用内提醒，关注即将扣费的订阅和仍待核实的付款。</p></article>
+          </div>
+          <div class="info-callout"><p><strong>数据保存在本地。</strong>订阅数据存储在仓库内 Markdown 笔记的 frontmatter 中。Subloom 无需 Dataview、Tasks、Reminder 插件或云端账户。</p></div>
+        </section>
+
+        <section class="doc-section" id="install" aria-labelledby="install-title">
+          <p class="eyebrow">02 / 安装设置</p>
+          <h2 id="install-title">安装 Subloom 0.1.0</h2>
+          <p>0.1.0 版本通过 GitHub Release 发布。请从 <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Subloom 0.1.0 发布页</a>下载三个插件文件。Subloom 尚未上架 Obsidian 社区插件目录。</p>
+          <ol class="steps">
+            <li>在仓库内创建 <code>.obsidian/plugins/subloom/</code> 文件夹。</li>
+            <li>将 <code>main.js</code>、<code>manifest.json</code> 和 <code>styles.css</code> 一起放入该文件夹。</li>
+            <li>重新加载 Obsidian，在<strong>设置 → 第三方插件（Community plugins）</strong>中启用 Subloom。如有需要，先关闭受限模式。</li>
+            <li>点击左侧边栏的<strong>日历时钟图标</strong>，或运行 <strong>Open Subscription Dashboard</strong>（打开订阅仪表盘）命令。</li>
+          </ol>
+          <div class="code-panel"><div class="code-panel-header"><span>仓库文件夹结构</span><button class="copy-button" type="button" aria-label="复制仓库文件夹结构">复制</button></div><pre><code>你的仓库/
+└── .obsidian/
+    └── plugins/
+        └── subloom/
+            ├── main.js
+            ├── manifest.json
+            └── styles.css</code></pre></div>
+          <p>Subloom 的 manifest 声明最低支持 Obsidian <code>1.12.0</code>。首次体验时，可以在单独的测试仓库中使用<a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">虚构示例仓库中的笔记</a>。</p>
+        </section>
+
+        <section class="doc-section" id="quick-start" aria-labelledby="start-title">
+          <p class="eyebrow">03 / 第一条记录</p>
+          <h2 id="start-title">添加你的第一个订阅</h2>
+          <p>从 Obsidian 命令面板运行 <strong>Add Subscription</strong>（添加订阅），或在仪表盘中选择 <strong>Add subscription</strong>。Subloom 会在 <code>Subloom/</code> 中创建一篇初始笔记并打开供你编辑。你可以将订阅笔记移动到仓库中的任意位置；识别范围不受这个文件夹限制。</p>
+          <ol class="steps">
+            <li>替换初始的 <code>service</code> 服务名称，并设置原始订阅开始日期 <code>subscription_start</code>。</li>
+            <li>根据实际方案设置 <code>billing_cycle</code>、<code>amount</code> 和 <code>currency</code>。</li>
+            <li>如有需要，关联支付方式笔记并调整 <code>remind_before</code>。</li>
+            <li>打开仪表盘查看预测结果。核实扣费成功后，再记录付款。</li>
+          </ol>
+        </section>
+
+        <section class="doc-section" id="subscription-notes" aria-labelledby="notes-title">
+          <p class="eyebrow">04 / Markdown 记录</p>
+          <h2 id="notes-title">订阅笔记</h2>
+          <p>笔记包含 <code>record_type: subscription</code> 时会被识别为订阅；启用标签识别后，精确的 <code>subscription</code> 或 <code>subscription/…</code> 标签也可用于识别。如果显式填写了其他 <code>record_type</code>，该笔记会被排除。预测扣费需要有效的 <code>subscription_start</code> 和 <code>billing_cycle</code> 字段。</p>
+          <div class="code-panel"><div class="code-panel-header"><span>示例 · AI 服务.md</span><button class="copy-button" type="button" aria-label="复制订阅示例">复制</button></div><pre><code>---
+tags:
+  - subscription/ai
+record_type: subscription
+service: 示例 AI 服务
+category: 软件
+subscription_start: 2026-01-31
+billing_cycle: monthly
+billing_interval: 1
+amount: 20
+currency: USD
+auto_renew: true
+payment_method: "[[示例银行卡]]"
+remind_before: 3
+subscription_lifecycle: active
+---
+
+可以在这里补充订阅的详细信息。</code></pre></div>
+          <p>日期使用 <code>YYYY-MM-DD</code> 格式。对于按月或按年计费的订阅，如果锚定日超出目标月份的天数，则使用该月最后一天。例如，以 31 日为锚定日的月度订阅，会在二月的最后一天产生预测扣费。Subloom 始终根据原始锚点计算未来日期，不会将笔记中的开始日期向后滚动。</p>
+          <p><code>auto_renew</code> 字段描述自动续费设置，不能表明扣费是否成功。使用 <code>subscription_lifecycle: paused</code>、<code>cancelled</code> 或 <code>archived</code>，可以保留记录并停用其扣费提醒。</p>
+        </section>
+
+        <section class="doc-section" id="payment-methods" aria-labelledby="methods-title">
+          <p class="eyebrow">05 / 关联信息</p>
+          <h2 id="methods-title">支付方式笔记</h2>
+          <p>创建一篇单独的 Markdown 笔记，填写 <code>record_type: payment_method</code>，然后在订阅的 <code>payment_method</code> 字段中用带引号的双链或笔记路径指向它。如果有多篇同名笔记，请使用包含路径的双链。</p>
+          <div class="code-panel"><div class="code-panel-header"><span>示例 · 示例银行卡.md</span><button class="copy-button" type="button" aria-label="复制支付方式示例">复制</button></div><pre><code>---
+record_type: payment_method
+institution: 示例银行
+payment_kind: credit_card
+currency: USD
+card_last4: "1234"
+card_expiry_month: 2028-07
+payment_method_status: active
+---</code></pre></div>
+          <p>仪表盘会在各支付方式下显示关联的订阅。如果有效的 <code>card_expiry_month</code> 落在本月或之后两个自然月内，还会显示需要关注的到期提示。</p>
+          <div class="info-callout"><p><strong>不要在笔记中保存敏感凭据。</strong>只记录卡号后四位等展示信息。不要在支付方式笔记中填写完整卡号、CVV、PIN、密码或银行登录凭据。</p></div>
+        </section>
+
+        <section class="doc-section" id="dashboard" aria-labelledby="dashboard-title">
+          <p class="eyebrow">06 / 日常使用</p>
+          <h2 id="dashboard-title">使用仪表盘</h2>
+          <p>仪表盘顶部显示活跃订阅数量、各条记录提醒窗口内的待扣费项目、已过扣费日期但尚待核实的付款，以及月度预估。金额按币种分别汇总，Subloom 不进行汇率换算。每周计费的预估按每年 52 周计算；每年计费的费用则分摊到 12 个月。</p>
+          <p><strong>Needs attention（需要关注）</strong>列出提前提醒、当天到期提醒、尚未核实的历史扣费，以及即将到期的支付方式。每项都可以打开、延后一天提醒或确认已读。<strong>Upcoming（即将到来）</strong>显示接下来八项具有有效计费安排的活跃订阅。</p>
+          <p><strong>All subscriptions（所有订阅）</strong>包含活跃和非活跃记录。可以按服务名称、路径或分类搜索；按生命周期、分类、续费设置或关联支付方式筛选；并按下次扣费日期、名称或金额排序。打开笔记即可编辑字段，也可以使用卡片上的 <strong>Record payment（记录付款）</strong>、<strong>Pause（暂停）</strong>和 <strong>Resume（恢复）</strong>操作。暂停和恢复会要求确认，然后更新原始笔记。</p>
+          <p>卡片分别展示计费安排、付款核实情况和服务有效状态。计费字段不完整或无效的笔记仍会出现在列表中，并显示字段问题；修正之前不会生成下次扣费预测。</p>
+        </section>
+
+        <section class="doc-section" id="payments" aria-labelledby="payments-title">
+          <p class="eyebrow">07 / 付款核实</p>
+          <h2 id="payments-title">记录已核实的付款</h2>
+          <p>确认扣费成功后，在订阅卡片上选择 <strong>Record payment（记录付款）</strong>。也可以打开订阅笔记并运行 <strong>Record Payment</strong> 命令。对话框会要求填写已核实的付款日期，以及不再享有服务的第一天。核对两个日期后，选择 <strong>Confirm verified payment（确认已核实的付款）</strong>。</p>
+          <p>Subloom 会将 <code>last_payment_date</code>、<code>paid_through</code> 和 <code>verification_status: confirmed</code> 写入原始笔记。仪表盘显示的状态取决于已核实的付款日期是否落在最近的计划计费周期内；仅有 <code>confirmed</code> 文本不能证明扣费成功。</p>
+          <div class="code-panel"><div class="code-panel-header"><span>示例 · 服务可用至 11 月 29 日结束</span><button class="copy-button" type="button" aria-label="复制付款核实示例">复制</button></div><pre><code>last_payment_date: 2026-10-30
+paid_through: 2026-11-30
+verification_status: confirmed</code></pre></div>
+          <p><code>paid_through</code> <strong>不包含所填日期当天</strong>：本例的服务有效期在当地时间 11 月 30 日零时结束。未填写 <code>paid_through</code> 时，有效状态为 <strong>unknown（未知）</strong>。未来日期显示 <strong>covered（有效）</strong>；今天或更早的日期显示 <strong>ended（已结束）</strong>。该模型不考虑宽限期。</p>
+          <div class="info-callout"><p><strong>预测不等于付款。</strong>到期日和 <code>auto_renew: true</code> 都是预期信息，不会自动生成已核实付款，也不能说明服务当前仍然有效。</p></div>
+        </section>
+
+        <section class="doc-section" id="reminders" aria-labelledby="reminders-title">
+          <p class="eyebrow">08 / 后续跟进</p>
+          <h2 id="reminders-title">提醒与通知</h2>
+          <p>活跃订阅可以在下次扣费前的 <code>remind_before</code> 天内产生提前提醒，在扣费当天产生到期提醒，并在计划扣费日期已过、且没有对应已核实付款时产生核实提醒。仪表盘也会展示即将到期的支付方式。</p>
+          <p>仪表盘中的 <strong>Snooze 1 day（延后一天）</strong>会将该项隐藏至当地时间的下一个自然日。<strong>Acknowledge（确认已读）</strong>会隐藏这一特定事件；之后的计费周期会生成新事件。提醒状态保存在插件的设置数据中。</p>
+          <p>Subloom 的通知是 Obsidian 应用内通知，仅在 Obsidian 打开时显示，并非设备推送或后台闹钟。可以在<strong>设置 → Subloom → In-app notices（应用内通知）</strong>中启用或关闭。<strong>Recognize subscription tags（识别订阅标签）</strong>设置用于控制是否通过标签识别未显式填写记录类型的笔记。</p>
+        </section>
+
+        <section class="doc-section" id="schema" aria-labelledby="schema-title">
+          <p class="eyebrow">09 / 字段参考</p>
+          <h2 id="schema-title">字段参考</h2>
+          <p>以下字段均写在 YAML frontmatter 中。可选字段留空时，会被视为未知或使用这里列出的默认值。</p>
+          <div class="doc-table-wrap"><table class="doc-table"><caption>订阅字段</caption><thead><tr><th scope="col">字段</th><th scope="col">含义</th></tr></thead><tbody>
+            <tr><th scope="row"><code>record_type</code></th><td>设为 <code>subscription</code> 可显式识别为订阅。也可以在启用标签识别时，使用精确的 <code>subscription</code> 或 <code>subscription/…</code> 标签。</td></tr>
+            <tr><th scope="row"><code>service</code>, <code>category</code></th><td>显示名称和可选分类。服务名称默认使用笔记名称。</td></tr>
+            <tr><th scope="row"><code>subscription_start</code></th><td>原始开始日期，格式为 <code>YYYY-MM-DD</code>。预测扣费的必填项。</td></tr>
+            <tr><th scope="row"><code>billing_cycle</code></th><td><code>weekly</code>（每周）、<code>monthly</code>（每月）或 <code>yearly</code>（每年）。预测扣费的必填项。</td></tr>
+            <tr><th scope="row"><code>billing_interval</code></th><td>两次扣费之间的周期数，必须为正整数；默认为 <code>1</code>。</td></tr>
+            <tr><th scope="row"><code>billing_anchor_day</code></th><td>按月或按年计费时使用的日期，取值为 <code>1</code>–<code>31</code>；默认为开始日期的日。</td></tr>
+            <tr><th scope="row"><code>amount</code>, <code>currency</code></th><td>预期扣费金额（非负数）和币种代码，不进行汇率换算。兼容旧字段 <code>price</code>，将其作为金额别名读取。</td></tr>
+            <tr><th scope="row"><code>auto_renew</code></th><td><code>true</code> 或 <code>false</code>；仅布尔值 <code>true</code> 被视为自动续费。</td></tr>
+            <tr><th scope="row"><code>subscription_lifecycle</code></th><td><code>active</code>（活跃，默认）、<code>paused</code>（暂停）、<code>cancelled</code>（已取消）或 <code>archived</code>（已归档）。兼容读取旧字段 <code>subscription_status</code>。</td></tr>
+            <tr><th scope="row"><code>payment_method</code></th><td>指向支付方式笔记的带引号双链或笔记路径。</td></tr>
+            <tr><th scope="row"><code>remind_before</code></th><td>提前提醒的天数，必须为非负整数；默认为 <code>3</code>。</td></tr>
+            <tr><th scope="row"><code>last_payment_date</code></th><td>已核实成功付款的日期，格式为 <code>YYYY-MM-DD</code>。</td></tr>
+            <tr><th scope="row"><code>paid_through</code></th><td>已核实服务有效期结束后的第一天，格式为 <code>YYYY-MM-DD</code>；有效期不包含该日。</td></tr>
+            <tr><th scope="row"><code>verification_status</code></th><td>可手动设置 <code>failed</code>（失败）或 <code>waived</code>（豁免）作为覆盖状态。确认付款时也会写入 <code>confirmed</code>，但界面上的确认状态仍根据付款日期计算。</td></tr>
+          </tbody></table></div>
+          <div class="doc-table-wrap"><table class="doc-table"><caption>支付方式字段</caption><thead><tr><th scope="col">字段</th><th scope="col">含义</th></tr></thead><tbody>
+            <tr><th scope="row"><code>record_type</code></th><td>必须为 <code>payment_method</code>。</td></tr>
+            <tr><th scope="row"><code>institution</code>, <code>payment_kind</code></th><td>显示名称和类型，例如 <code>credit_card</code>（信用卡）。</td></tr>
+            <tr><th scope="row"><code>currency</code>, <code>card_last4</code></th><td>可选的展示信息：币种和卡号后四位。</td></tr>
+            <tr><th scope="row"><code>card_expiry_month</code></th><td>可选的 <code>YYYY-MM</code> 格式日期，用于生成仪表盘上的到期提示。</td></tr>
+            <tr><th scope="row"><code>payment_method_status</code></th><td>可选的展示状态。</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="doc-section" id="troubleshooting" aria-labelledby="troubleshooting-title">
+          <p class="eyebrow">10 / 帮助</p>
+          <h2 id="troubleshooting-title">常见问题与当前限制</h2>
+          <h3>笔记没有出现在仪表盘中</h3>
+          <p>检查它是否为包含 YAML frontmatter 的 Markdown 笔记，且带有 <code>record_type: subscription</code>，或在启用标签识别时带有匹配的订阅标签。如果显式填写了其他 <code>record_type</code>，就不会通过标签识别。Subloom 读取的是当前打开的仓库。</p>
+          <h3>没有显示下次扣费日期</h3>
+          <p>查看该卡片上的字段问题提示。开始日期应使用有效的 <code>YYYY-MM-DD</code> 格式，计费周期须受支持，间隔须为正整数。即使计费安排不完整，记录仍可出现在仪表盘中。</p>
+          <h3>支付方式链接出现问题</h3>
+          <p>确认目标笔记包含 <code>record_type: payment_method</code>。如果有多篇同名笔记，请使用带路径的双链，例如 <code>"[[Finance/Cards/示例银行卡]]"</code>。</p>
+          <h3>记录付款后仍显示“未核实”</h3>
+          <p>检查 <code>last_payment_date</code> 是否落在最近的计划计费周期内，同时核对 <code>subscription_start</code> 和计费规则。保存 <code>verification_status: confirmed</code> 不会跳过这项日期检查。</p>
+          <h3>关闭 Obsidian 时没有收到通知</h3>
+          <p>Subloom 没有后台服务。重新打开 Obsidian 后即可查看应用内通知和当前仪表盘。也请检查是否在 Subloom 设置中关闭了通知。</p>
+          <div class="info-callout"><p><strong>当前范围。</strong>Subloom 为每项订阅记录一条周期规则和最近一次已核实付款，不保存交易流水，不从预测结果推断付款，不换算币种，也不处理宽限期。旧字段 <code>expires</code> 不会被视为已核实的服务有效期。</p></div>
+          <p>查看<a href="https://github.com/jasonshelter0/obsidian-subloom">源码仓库</a>、<a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">虚构示例仓库</a>和 <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">0.1.0 发布文件</a>。也可以阅读 <a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/README.zh-CN.md">简体中文 README</a>；更详细的数据说明见仓库中的<a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/docs/DATA_SCHEMA.md">数据结构参考（英文）</a>。</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-main"><a class="brand" href="/zh-cn/"><img src="/assets/mark.svg" width="30" height="30" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a><p>订阅笔记、扣费预测与付款记录。</p></div>
+    <div class="footer-links"><a href="/zh-cn/">首页</a><a href="https://github.com/jasonshelter0/obsidian-subloom" target="_blank" rel="noopener noreferrer">Subloom 源码 ↗</a><a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">发布版本 ↗</a><a href="#main">返回顶部 ↑</a></div>
+    <div class="footer-bottom"><span>© <span data-year>2026</span> Jason Shelter</span><span>Subloom 使用手册 · v0.1.0 首个版本</span></div>
+  </footer>
+  </div>
+</body>
+</html>

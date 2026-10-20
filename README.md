@@ -6,6 +6,10 @@ Source for [jasonshelter0.github.io](https://jasonshelter0.github.io/). GitHub P
 
 - `/index.html` — portfolio homepage.
 - `/subloom/index.html` — Subloom plugin manual.
+- `/zh-cn/index.html` — Simplified Chinese homepage.
+- `/zh-cn/subloom/index.html` — Simplified Chinese manual.
+
+Every page has an English / 简体中文 switch. Translate navigation, accessible labels, metadata, and prose together; keep YAML field names unchanged.
 - `/assets/site.css` and `/assets/site.js` — shared appearance and interactions.
 - `/assets/mark.svg` — site mark and favicon.
 

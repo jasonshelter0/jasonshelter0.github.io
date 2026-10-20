@@ -10,29 +10,33 @@
   <meta property="og:description" content="A practical guide to local, Markdown-first subscription forecasts and payment verification in Obsidian.">
   <meta property="og:url" content="https://jasonshelter0.github.io/subloom/">
   <link rel="canonical" href="https://jasonshelter0.github.io/subloom/">
+  <link rel="alternate" hreflang="en" href="https://jasonshelter0.github.io/subloom/">
+  <link rel="alternate" hreflang="zh-CN" href="https://jasonshelter0.github.io/zh-cn/subloom/">
+  <link rel="alternate" hreflang="x-default" href="https://jasonshelter0.github.io/subloom/">
   <title>Subloom Manual — Jason Shelter</title>
-  <link rel="icon" href="../assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../assets/site.css">
-  <script src="../assets/site.js" defer></script>
+  <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/site.css">
+  <script src="/assets/site.js" defer></script>
 </head>
 <body class="docs-page">
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="site-shell">
   <header class="site-header">
-    <a class="brand" href="/" aria-label="Jason Shelter, home"><img src="../assets/mark.svg" width="34" height="34" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a>
+    <a class="brand" href="/" aria-label="Jason Shelter, home"><img src="/assets/mark.svg" width="34" height="34" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a>
     <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
     <nav class="nav" id="site-nav" aria-label="Main navigation">
       <a href="/">Home</a>
       <a href="/subloom/" aria-current="page">Subloom</a>
       <a href="https://github.com/jasonshelter0" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      <div class="language-switch" aria-label="Language"><a href="/subloom/" lang="en" hreflang="en" aria-current="page">EN</a><span aria-hidden="true">/</span><a href="/zh-cn/subloom/" lang="zh-CN" hreflang="zh-CN">简体中文</a></div>
     </nav>
   </header>
 
   <main id="main">
     <section class="docs-hero" aria-labelledby="manual-title">
       <div class="docs-hero-inner">
-        <p class="eyebrow">Obsidian plugin <span aria-hidden="true">/</span> v0.1.0 preview</p>
-        <h1 id="manual-title">Subscriptions, with a paper trail.</h1>
+        <p class="eyebrow">Obsidian plugin <span aria-hidden="true">/</span> v0.1.0 initial release</p>
+        <h1 id="manual-title">Subscription management in Obsidian</h1>
         <p class="docs-lead">Subloom reads your Markdown notes, forecasts recurring charges, and keeps confirmed payments separate from expected ones. Your records stay in your vault.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#install">Install Subloom <span aria-hidden="true">↗</span></a>
@@ -80,8 +84,8 @@
 
         <section class="doc-section" id="install" aria-labelledby="install-title">
           <p class="eyebrow">02 / Setup</p>
-          <h2 id="install-title">Install the preview release</h2>
-          <p>Version 0.1.0 is distributed as a GitHub release. Download the three plugin files from the <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Subloom 0.1.0 release</a>. This preview is not yet listed in Obsidian’s Community Plugins directory.</p>
+          <h2 id="install-title">Install Subloom 0.1.0</h2>
+          <p>Version 0.1.0 is distributed as a GitHub release. Download the three plugin files from the <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Subloom 0.1.0 release</a>. Subloom is not yet listed in Obsidian’s Community Plugins directory.</p>
           <ol class="steps">
             <li>In your vault, create <code>.obsidian/plugins/subloom/</code>.</li>
             <li>Place <code>main.js</code>, <code>manifest.json</code>, and <code>styles.css</code> together in that folder.</li>
@@ -225,16 +229,16 @@ verification_status: confirmed</code></pre></div>
           <h3>No notice arrived while Obsidian was closed</h3>
           <p>Subloom has no background service. Reopen Obsidian to see in-app notices and the current dashboard. Notices may also be disabled in Subloom settings.</p>
           <div class="info-callout"><p><strong>Current scope.</strong> Subloom models one recurring rule and the latest verified payment per subscription. It does not store a transaction ledger, infer payment from a forecast, convert currencies, or encode grace periods. The legacy <code>expires</code> field is not treated as verified access.</p></div>
-          <p>Explore the <a href="https://github.com/jasonshelter0/obsidian-subloom">source repository</a>, <a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">fictional demo vault</a>, and <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">0.1.0 release files</a>. For data details, see the repository’s <a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/docs/DATA_SCHEMA.md">schema reference</a>.</p>
+          <p>Explore the <a href="https://github.com/jasonshelter0/obsidian-subloom">source repository</a>, <a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">fictional demo vault</a>, and <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">0.1.0 release files</a>. Read the <a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/README.zh-CN.md" lang="zh-CN">简体中文 README</a>. For data details, see the repository’s <a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/docs/DATA_SCHEMA.md">schema reference</a>.</p>
         </section>
       </div>
     </div>
   </main>
 
   <footer class="site-footer">
-    <div class="footer-main"><a class="brand" href="/"><img src="../assets/mark.svg" width="30" height="30" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a><p>Keep the whole cycle in sight.</p></div>
+    <div class="footer-main"><a class="brand" href="/"><img src="/assets/mark.svg" width="30" height="30" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a><p>Subscription notes, forecasts, and payment records.</p></div>
     <div class="footer-links"><a href="/">Home</a><a href="https://github.com/jasonshelter0/obsidian-subloom" target="_blank" rel="noopener noreferrer">Subloom source ↗</a><a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Release ↗</a><a href="#main">Back to top ↑</a></div>
-    <div class="footer-bottom"><span>© <span data-year>2026</span> Jason Shelter</span><span>Subloom manual · v0.1.0 preview</span></div>
+    <div class="footer-bottom"><span>© <span data-year>2026</span> Jason Shelter</span><span>Subloom manual · v0.1.0 initial release</span></div>
   </footer>
   </div>
 </body>
