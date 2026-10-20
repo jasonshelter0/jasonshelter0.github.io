@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b1c">
+  <meta name="description" content="Subloom manual: organize subscription notes, forecast recurring charges, verify payments, and manage reminders in Obsidian.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Subloom Manual — Jason Shelter">
+  <meta property="og:description" content="A practical guide to local, Markdown-first subscription forecasts and payment verification in Obsidian.">
+  <meta property="og:url" content="https://jasonshelter0.github.io/subloom/">
+  <link rel="canonical" href="https://jasonshelter0.github.io/subloom/">
+  <title>Subloom Manual — Jason Shelter</title>
+  <link rel="icon" href="../assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/site.css">
+  <script src="../assets/site.js" defer></script>
+</head>
+<body class="docs-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="site-shell">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Jason Shelter, home"><img src="../assets/mark.svg" width="34" height="34" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a>
+    <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-nav"><span></span><span></span><span></span></button>
+    <nav class="nav" id="site-nav" aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="/subloom/" aria-current="page">Subloom</a>
+      <a href="https://github.com/jasonshelter0" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="docs-hero" aria-labelledby="manual-title">
+      <div class="docs-hero-inner">
+        <p class="eyebrow">Obsidian plugin <span aria-hidden="true">/</span> v0.1.0 preview</p>
+        <h1 id="manual-title">Subscriptions, with a paper trail.</h1>
+        <p class="docs-lead">Subloom reads your Markdown notes, forecasts recurring charges, and keeps confirmed payments separate from expected ones. Your records stay in your vault.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#install">Install Subloom <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="https://github.com/jasonshelter0/obsidian-subloom" target="_blank" rel="noopener noreferrer">View source on GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+        <p class="page-meta"><span>LOCAL MARKDOWN</span><span>NO DATAVIEW</span><span>OBSIDIAN 1.12.0+</span></p>
+      </div>
+      <div class="docs-hero-art" aria-hidden="true">
+        <div class="art-thread"></div>
+        <div class="art-card art-card-one"><small>NEXT CHARGE</small><b>AI Service</b><span>OCT 31 · 20 USD</span></div>
+        <div class="art-center">✳</div>
+        <div class="art-card art-card-two"><small>PAYMENT RECORD</small><b>Verified</b><span>PAID THROUGH NOV 30</span></div>
+      </div>
+    </section>
+
+    <div class="docs-layout">
+      <aside class="docs-toc" aria-label="On this page">
+        <nav aria-label="Manual sections">
+          <p class="eyebrow">Manual</p>
+          <a href="#overview">At a glance</a>
+          <a href="#install">Install</a>
+          <a href="#quick-start">Quick start</a>
+          <a href="#subscription-notes">Subscription notes</a>
+          <a href="#payment-methods">Payment methods</a>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#payments">Record payments</a>
+          <a href="#reminders">Reminders</a>
+          <a href="#schema">Field reference</a>
+          <a href="#troubleshooting">Troubleshooting</a>
+        </nav>
+      </aside>
+
+      <div class="docs-content">
+        <section class="doc-section" id="overview" aria-labelledby="overview-title">
+          <p class="eyebrow">01 / Overview</p>
+          <h2 id="overview-title">A clear view of what comes next</h2>
+          <p>Subloom scans subscription notes anywhere in your open vault. It calculates the next scheduled charge from each note’s original billing rule, then shows upcoming charges, payment verification, and known access coverage in one dashboard.</p>
+          <div class="feature-grid">
+            <article class="feature-card"><span aria-hidden="true">01</span><h3>Forecast</h3><p>See weekly, monthly, and yearly charges, plus a monthly estimate grouped by currency.</p></article>
+            <article class="feature-card"><span aria-hidden="true">02</span><h3>Verify</h3><p>Record a successful payment only after checking it. Forecasts and auto-renew settings never count as proof.</p></article>
+            <article class="feature-card"><span aria-hidden="true">03</span><h3>Follow up</h3><p>Use in-app reminders for approaching charges and payments that still need verification.</p></article>
+          </div>
+          <div class="info-callout"><p><strong>Local by design.</strong> Subscription data lives in Markdown frontmatter in your vault. Subloom needs no Dataview, Tasks, Reminder, or cloud account.</p></div>
+        </section>
+
+        <section class="doc-section" id="install" aria-labelledby="install-title">
+          <p class="eyebrow">02 / Setup</p>
+          <h2 id="install-title">Install the preview release</h2>
+          <p>Version 0.1.0 is distributed as a GitHub release. Download the three plugin files from the <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Subloom 0.1.0 release</a>. This preview is not yet listed in Obsidian’s Community Plugins directory.</p>
+          <ol class="steps">
+            <li>In your vault, create <code>.obsidian/plugins/subloom/</code>.</li>
+            <li>Place <code>main.js</code>, <code>manifest.json</code>, and <code>styles.css</code> together in that folder.</li>
+            <li>Reload Obsidian. In <strong>Settings → Community plugins</strong>, enable Subloom. If needed, first turn off Restricted mode.</li>
+            <li>Open the dashboard with the <strong>calendar-clock ribbon icon</strong> or the command <strong>Open Subscription Dashboard</strong>.</li>
+          </ol>
+          <div class="code-panel"><div class="code-panel-header"><span>Vault folder</span><button class="copy-button" type="button" aria-label="Copy vault folder layout">Copy</button></div><pre><code>Your vault/
+└── .obsidian/
+    └── plugins/
+        └── subloom/
+            ├── main.js
+            ├── manifest.json
+            └── styles.css</code></pre></div>
+          <p>Subloom’s manifest declares a minimum Obsidian version of <code>1.12.0</code>. For a safe first look, try the <a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">fictional demo vault notes</a> in a separate test vault.</p>
+        </section>
+
+        <section class="doc-section" id="quick-start" aria-labelledby="start-title">
+          <p class="eyebrow">03 / First record</p>
+          <h2 id="start-title">Add your first subscription</h2>
+          <p>Run <strong>Add Subscription</strong> from Obsidian’s command palette or select <strong>Add subscription</strong> in the dashboard. Subloom creates a starter note in <code>Subloom/</code> and opens it for editing. You can move subscription notes anywhere in the vault; discovery is not tied to that folder.</p>
+          <ol class="steps">
+            <li>Replace the starter <code>service</code> name and set the original <code>subscription_start</code> date.</li>
+            <li>Set <code>billing_cycle</code>, <code>amount</code>, and <code>currency</code> to match the actual plan.</li>
+            <li>If applicable, link a payment method note and adjust <code>remind_before</code>.</li>
+            <li>Open the dashboard to review the forecast. Record a payment only after you verify the charge.</li>
+          </ol>
+        </section>
+
+        <section class="doc-section" id="subscription-notes" aria-labelledby="notes-title">
+          <p class="eyebrow">04 / Markdown records</p>
+          <h2 id="notes-title">Subscription notes</h2>
+          <p>A note is recognized when it has <code>record_type: subscription</code>, or an exact <code>subscription</code> or <code>subscription/…</code> tag while tag recognition is enabled. A different explicit <code>record_type</code> excludes the note. Valid <code>subscription_start</code> and <code>billing_cycle</code> fields are needed for a forecast.</p>
+          <div class="code-panel"><div class="code-panel-header"><span>Example · AI Service.md</span><button class="copy-button" type="button" aria-label="Copy subscription example">Copy</button></div><pre><code>---
+tags:
+  - subscription/ai
+record_type: subscription
+service: Example AI Service
+category: Software
+subscription_start: 2026-01-31
+billing_cycle: monthly
+billing_interval: 1
+amount: 20
+currency: USD
+auto_renew: true
+payment_method: "[[Example Card]]"
+remind_before: 3
+subscription_lifecycle: active
+---
+
+Details about this subscription can go here.</code></pre></div>
+          <p>Dates use <code>YYYY-MM-DD</code>. For monthly and yearly plans, an anchor day beyond the end of a month is clamped to its last day. For example, a monthly plan anchored on the 31st is forecast on February’s last day. Subloom calculates future dates from the original anchor; it does not roll the start date forward in your note.</p>
+          <p>The <code>auto_renew</code> field describes your renewal setting. It does not say whether a charge succeeded. Use <code>subscription_lifecycle: paused</code>, <code>cancelled</code>, or <code>archived</code> to keep a record without active charge reminders.</p>
+        </section>
+
+        <section class="doc-section" id="payment-methods" aria-labelledby="methods-title">
+          <p class="eyebrow">05 / Connections</p>
+          <h2 id="methods-title">Payment method notes</h2>
+          <p>Create a separate Markdown note with <code>record_type: payment_method</code>, then point a subscription’s <code>payment_method</code> field to it with a quoted wikilink or note path. A path-qualified wikilink helps when several notes share the same name.</p>
+          <div class="code-panel"><div class="code-panel-header"><span>Example · Example Card.md</span><button class="copy-button" type="button" aria-label="Copy payment method example">Copy</button></div><pre><code>---
+record_type: payment_method
+institution: Example Bank
+payment_kind: credit_card
+currency: USD
+card_last4: "1234"
+card_expiry_month: 2028-07
+payment_method_status: active
+---</code></pre></div>
+          <p>The dashboard shows linked subscriptions under each payment method. It also adds an attention item when a valid <code>card_expiry_month</code> is within the current or next two calendar months.</p>
+          <div class="info-callout"><p><strong>Keep secrets out of notes.</strong> Store only display information such as the last four digits. Do not put full card numbers, CVV, PINs, passwords, or bank credentials in a payment method note.</p></div>
+        </section>
+
+        <section class="doc-section" id="dashboard" aria-labelledby="dashboard-title">
+          <p class="eyebrow">06 / Daily use</p>
+          <h2 id="dashboard-title">Use the dashboard</h2>
+          <p>The top of the dashboard shows the active subscription count, charges due within each record’s reminder window, overdue payment checks, and a monthly forecast. Amounts are grouped by currency; Subloom does not convert between currencies. Weekly estimates use 52 weeks per year, and yearly plans are spread across 12 months.</p>
+          <p><strong>Needs attention</strong> lists advance and due-today reminders, unverified past charges, and near-expiring payment methods. Each item can be opened, snoozed for one day, or acknowledged. <strong>Upcoming</strong> shows the next eight active subscriptions with valid schedules.</p>
+          <p><strong>All subscriptions</strong> includes both active and inactive records. Search by service, path, or category; filter by lifecycle, category, renewal setting, or linked payment method; then sort by next charge, name, or amount. Open a note to edit its fields, or use the card’s <strong>Record payment</strong>, <strong>Pause</strong>, and <strong>Resume</strong> actions. Pause and Resume ask for confirmation and update the original note.</p>
+          <p>Cards show schedule, verification, and access status separately. A note with incomplete or invalid schedule fields still appears in the list with a field issue, but it has no next-charge forecast until corrected.</p>
+        </section>
+
+        <section class="doc-section" id="payments" aria-labelledby="payments-title">
+          <p class="eyebrow">07 / Verification</p>
+          <h2 id="payments-title">Record a verified payment</h2>
+          <p>After confirming a successful charge, select <strong>Record payment</strong> on the subscription card. You can also open the subscription note and run the <strong>Record Payment</strong> command. The dialog asks for the verified payment date and the first day without coverage. Review both dates before selecting <strong>Confirm verified payment</strong>.</p>
+          <p>Subloom writes <code>last_payment_date</code>, <code>paid_through</code>, and <code>verification_status: confirmed</code> to the original note. The status shown in the dashboard is computed from whether the verified date falls within the latest scheduled billing cycle; the <code>confirmed</code> text alone does not establish a successful charge.</p>
+          <div class="code-panel"><div class="code-panel-header"><span>Example · coverage through November 29</span><button class="copy-button" type="button" aria-label="Copy payment verification example">Copy</button></div><pre><code>last_payment_date: 2026-10-30
+paid_through: 2026-11-30
+verification_status: confirmed</code></pre></div>
+          <p><code>paid_through</code> is <strong>exclusive</strong>: coverage in this example ends at the start of November 30 in local time. Without <code>paid_through</code>, access status is <strong>unknown</strong>. A future value shows <strong>covered</strong>; today or an earlier value shows <strong>ended</strong>. This model does not account for grace periods.</p>
+          <div class="info-callout"><p><strong>Forecast ≠ payment.</strong> A due date and <code>auto_renew: true</code> are expectations. They never create a verified payment or imply current access.</p></div>
+        </section>
+
+        <section class="doc-section" id="reminders" aria-labelledby="reminders-title">
+          <p class="eyebrow">08 / Follow-up</p>
+          <h2 id="reminders-title">Reminders and notices</h2>
+          <p>Active subscriptions can generate an advance reminder within <code>remind_before</code> days of the next charge, a due-today reminder, and a verification reminder after a scheduled charge has passed without a matching confirmed payment. The dashboard also shows near-expiring payment methods.</p>
+          <p>The dashboard’s <strong>Snooze 1 day</strong> action hides an item until the next local calendar day. <strong>Acknowledge</strong> hides that specific event. A later billing cycle gets a new event. Reminder state is saved in the plugin’s settings data.</p>
+          <p>Subloom’s notices are Obsidian in-app notices, shown only while Obsidian is open. They are not device push notifications or background alarms. Turn them on or off in <strong>Settings → Subloom → In-app notices</strong>. The <strong>Recognize subscription tags</strong> setting controls discovery of tagged notes without an explicit record type.</p>
+        </section>
+
+        <section class="doc-section" id="schema" aria-labelledby="schema-title">
+          <p class="eyebrow">09 / Reference</p>
+          <h2 id="schema-title">Field reference</h2>
+          <p>These are YAML frontmatter fields. A blank optional field is treated as unknown or uses the default shown here.</p>
+          <div class="doc-table-wrap"><table class="doc-table"><caption>Subscription fields</caption><thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead><tbody>
+            <tr><th scope="row"><code>record_type</code></th><td>Use <code>subscription</code> for explicit discovery. Otherwise use an exact <code>subscription</code> or <code>subscription/…</code> tag when tag recognition is enabled.</td></tr>
+            <tr><th scope="row"><code>service</code>, <code>category</code></th><td>Display name and optional grouping. Service defaults to the note name.</td></tr>
+            <tr><th scope="row"><code>subscription_start</code></th><td>Original start date, <code>YYYY-MM-DD</code>. Required for forecasts.</td></tr>
+            <tr><th scope="row"><code>billing_cycle</code></th><td><code>weekly</code>, <code>monthly</code>, or <code>yearly</code>. Required for forecasts.</td></tr>
+            <tr><th scope="row"><code>billing_interval</code></th><td>Positive whole number of cycles between charges; defaults to <code>1</code>.</td></tr>
+            <tr><th scope="row"><code>billing_anchor_day</code></th><td>Day <code>1</code>–<code>31</code> for monthly or yearly scheduling; defaults to the start date’s day.</td></tr>
+            <tr><th scope="row"><code>amount</code>, <code>currency</code></th><td>Expected nonnegative charge and unconverted currency code. Legacy <code>price</code> is read as an amount alias.</td></tr>
+            <tr><th scope="row"><code>auto_renew</code></th><td><code>true</code> or <code>false</code>; only literal <code>true</code> counts as automatic renewal.</td></tr>
+            <tr><th scope="row"><code>subscription_lifecycle</code></th><td><code>active</code> (default), <code>paused</code>, <code>cancelled</code>, or <code>archived</code>. Legacy <code>subscription_status</code> is read.</td></tr>
+            <tr><th scope="row"><code>payment_method</code></th><td>Quoted wikilink or note path pointing to a payment method note.</td></tr>
+            <tr><th scope="row"><code>remind_before</code></th><td>Nonnegative whole number of days; defaults to <code>3</code>.</td></tr>
+            <tr><th scope="row"><code>last_payment_date</code></th><td>Date of a verified successful payment, <code>YYYY-MM-DD</code>.</td></tr>
+            <tr><th scope="row"><code>paid_through</code></th><td>Exclusive first day without verified coverage, <code>YYYY-MM-DD</code>.</td></tr>
+            <tr><th scope="row"><code>verification_status</code></th><td><code>failed</code> or <code>waived</code> can be set manually as overrides. Payment confirmation also writes <code>confirmed</code>; displayed confirmation is calculated from the payment date.</td></tr>
+          </tbody></table></div>
+          <div class="doc-table-wrap"><table class="doc-table"><caption>Payment method fields</caption><thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead><tbody>
+            <tr><th scope="row"><code>record_type</code></th><td>Must be <code>payment_method</code>.</td></tr>
+            <tr><th scope="row"><code>institution</code>, <code>payment_kind</code></th><td>Display name and type, such as <code>credit_card</code>.</td></tr>
+            <tr><th scope="row"><code>currency</code>, <code>card_last4</code></th><td>Optional display details.</td></tr>
+            <tr><th scope="row"><code>card_expiry_month</code></th><td>Optional <code>YYYY-MM</code> value for dashboard attention items.</td></tr>
+            <tr><th scope="row"><code>payment_method_status</code></th><td>Optional display status.</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="doc-section" id="troubleshooting" aria-labelledby="troubleshooting-title">
+          <p class="eyebrow">10 / Help</p>
+          <h2 id="troubleshooting-title">Troubleshooting and limits</h2>
+          <h3>A note is missing from the dashboard</h3>
+          <p>Check that it is a Markdown note with YAML frontmatter and <code>record_type: subscription</code>, or a matching subscription tag with tag recognition enabled. A different explicit <code>record_type</code> prevents tag-based discovery. Subloom reads the currently open vault.</p>
+          <h3>A next charge is missing</h3>
+          <p>Check the dashboard’s field issue on that card. Use a valid <code>YYYY-MM-DD</code> start date, a supported billing cycle, and a positive whole-number interval. The dashboard can still list a record whose schedule is incomplete.</p>
+          <h3>A payment method link has an issue</h3>
+          <p>Make sure the destination note has <code>record_type: payment_method</code>. If multiple notes share the same name, use a path-qualified wikilink, such as <code>"[[Finance/Cards/Example Card]]"</code>.</p>
+          <h3>A payment says “unverified” after recording it</h3>
+          <p>Check that <code>last_payment_date</code> falls within the latest scheduled billing cycle. Also review <code>subscription_start</code> and the billing rule. A saved <code>verification_status: confirmed</code> does not override this date check.</p>
+          <h3>No notice arrived while Obsidian was closed</h3>
+          <p>Subloom has no background service. Reopen Obsidian to see in-app notices and the current dashboard. Notices may also be disabled in Subloom settings.</p>
+          <div class="info-callout"><p><strong>Current scope.</strong> Subloom models one recurring rule and the latest verified payment per subscription. It does not store a transaction ledger, infer payment from a forecast, convert currencies, or encode grace periods. The legacy <code>expires</code> field is not treated as verified access.</p></div>
+          <p>Explore the <a href="https://github.com/jasonshelter0/obsidian-subloom">source repository</a>, <a href="https://github.com/jasonshelter0/obsidian-subloom/tree/main/sample-vault">fictional demo vault</a>, and <a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">0.1.0 release files</a>. For data details, see the repository’s <a href="https://github.com/jasonshelter0/obsidian-subloom/blob/main/docs/DATA_SCHEMA.md">schema reference</a>.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-main"><a class="brand" href="/"><img src="../assets/mark.svg" width="30" height="30" alt=""><span>JASON<span class="brand-dot">.</span>SHELTER</span></a><p>Keep the whole cycle in sight.</p></div>
+    <div class="footer-links"><a href="/">Home</a><a href="https://github.com/jasonshelter0/obsidian-subloom" target="_blank" rel="noopener noreferrer">Subloom source ↗</a><a href="https://github.com/jasonshelter0/obsidian-subloom/releases/tag/0.1.0">Release ↗</a><a href="#main">Back to top ↑</a></div>
+    <div class="footer-bottom"><span>© <span data-year>2026</span> Jason Shelter</span><span>Subloom manual · v0.1.0 preview</span></div>
+  </footer>
+  </div>
+</body>
+</html>
